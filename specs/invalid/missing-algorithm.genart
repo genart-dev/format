@@ -1,0 +1,12 @@
+{
+  "genart": "1.1",
+  "id": "missing-algorithm",
+  "title": "Missing Algorithm",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5" },
+  "canvas": { "width": 600, "height": 600 },
+  "parameters": [],
+  "colors": [],
+  "state": { "seed": 1, "params": {}, "colorPalette": [] }
+}

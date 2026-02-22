@@ -1,0 +1,13 @@
+{
+  "genart": "1.1",
+  "id": "bad-renderer",
+  "title": "Invalid Renderer Type",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "unity" },
+  "canvas": { "width": 600, "height": 600 },
+  "parameters": [],
+  "colors": [],
+  "state": { "seed": 1, "params": {}, "colorPalette": [] },
+  "algorithm": "function sketch() { return { initializeSystem() {} }; }"
+}

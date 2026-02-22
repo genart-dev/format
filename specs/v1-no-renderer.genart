@@ -1,0 +1,18 @@
+{
+  "genart": "1.0",
+  "id": "legacy-no-renderer",
+  "title": "Legacy v1.0 File",
+  "created": "2026-01-01T00:00:00Z",
+  "modified": "2026-01-01T00:00:00Z",
+  "canvas": { "width": 600, "height": 600 },
+  "parameters": [
+    { "key": "density", "label": "Density", "min": 1, "max": 100, "step": 1, "default": 50 }
+  ],
+  "colors": [],
+  "state": {
+    "seed": 99,
+    "params": { "density": 50 },
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  p.setup = () => { p.createCanvas(600, 600); };\n  p.draw = () => { p.background(0); p.noLoop(); };\n  return { initializeSystem() {} };\n}"
+}

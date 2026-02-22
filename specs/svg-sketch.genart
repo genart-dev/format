@@ -1,0 +1,57 @@
+{
+  "genart": "1.1",
+  "id": "svg-concentric-rings",
+  "title": "SVG Concentric Rings",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-19T22:16:44.062Z",
+  "renderer": {
+    "type": "svg"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "parameters": [
+    {
+      "key": "ringCount",
+      "label": "Ring Count",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "strokeWidth",
+      "label": "Stroke Width",
+      "min": 0.5,
+      "max": 8,
+      "step": 0.5,
+      "default": 2
+    }
+  ],
+  "colors": [
+    {
+      "key": "bg",
+      "label": "Background",
+      "default": "#fafafa"
+    },
+    {
+      "key": "stroke",
+      "label": "Stroke",
+      "default": "#1a1a1a"
+    }
+  ],
+  "state": {
+    "seed": 555,
+    "params": {
+      "ringCount": 10,
+      "strokeWidth": 2
+    },
+    "colorPalette": [
+      "#3a3131",
+      "#ffffff"
+    ]
+  },
+  "snapshots": [],
+  "algorithm": "function sketch(state) {\n  function generate() {\n    const w = state.canvas.width;\n    const h = state.canvas.height;\n    const cx = w / 2;\n    const cy = h / 2;\n    const maxR = Math.min(w, h) / 2 - 20;\n    const n = state.params.ringCount;\n    let circles = '';\n    for (let i = 0; i < n; i++) {\n      const r = maxR * ((i + 1) / n);\n      circles += `<circle cx=\"${cx}\" cy=\"${cy}\" r=\"${r}\" fill=\"none\" stroke=\"${state.colorPalette[1]}\" stroke-width=\"${state.params.strokeWidth}\" />`;\n    }\n    return `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${w}\" height=\"${h}\" viewBox=\"0 0 ${w} ${h}\"><rect width=\"${w}\" height=\"${h}\" fill=\"${state.colorPalette[0]}\" />${circles}</svg>`;\n  }\n  return { generate, initializeSystem: generate };\n}"
+}

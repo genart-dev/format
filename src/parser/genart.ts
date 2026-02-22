@@ -1,0 +1,405 @@
+import type {
+  SketchDefinition,
+  RendererType,
+  RendererSpec,
+  CanvasSpec,
+  ParamDef,
+  ColorDef,
+  ThemeDef,
+  TabDef,
+  SketchState,
+  Snapshot,
+} from "../types.js";
+import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
+
+const VALID_RENDERER_TYPES: readonly RendererType[] = [
+  "p5",
+  "three",
+  "glsl",
+  "canvas2d",
+  "svg",
+];
+
+/** Default renderer for v1.0 files that omit the renderer field. */
+const DEFAULT_RENDERER: RendererSpec = { type: "p5" };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+type Obj = Record<string, unknown>;
+
+function assertString(value: unknown, field: string): asserts value is string {
+  if (typeof value !== "string") {
+    throw new Error(`"${field}" must be a string`);
+  }
+}
+
+function assertNumber(value: unknown, field: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`"${field}" must be a finite number`);
+  }
+}
+
+function assertObject(value: unknown, field: string): asserts value is Obj {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`"${field}" must be an object`);
+  }
+}
+
+function assertArray(value: unknown, field: string): asserts value is unknown[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`"${field}" must be an array`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-parsers
+// ---------------------------------------------------------------------------
+
+function parseRenderer(raw: unknown): RendererSpec {
+  assertObject(raw, "renderer");
+  const type = raw["type"];
+  assertString(type, "renderer.type");
+  if (!VALID_RENDERER_TYPES.includes(type as RendererType)) {
+    throw new Error(
+      `Unknown renderer type "${type}". Valid types: ${VALID_RENDERER_TYPES.join(", ")}`,
+    );
+  }
+  const version = raw["version"];
+  if (version !== undefined) {
+    assertString(version, "renderer.version");
+    return { type: type as RendererType, version };
+  }
+  return { type: type as RendererType };
+}
+
+function parseCanvas(raw: unknown): CanvasSpec {
+  assertObject(raw, "canvas");
+
+  const width = raw["width"];
+  assertNumber(width, "canvas.width");
+  const height = raw["height"];
+  assertNumber(height, "canvas.height");
+
+  if (raw["preset"] !== undefined) {
+    assertString(raw["preset"], "canvas.preset");
+    const known = CANVAS_PRESETS.map((p) => p.id);
+    if (!known.includes(raw["preset"])) {
+      resolvePreset(raw["preset"]); // throws with descriptive error
+    }
+  }
+
+  return {
+    width,
+    height,
+    ...(raw["preset"] !== undefined ? { preset: raw["preset"] as string } : {}),
+    ...(raw["pixelDensity"] !== undefined
+      ? (() => {
+          assertNumber(raw["pixelDensity"], "canvas.pixelDensity");
+          return { pixelDensity: raw["pixelDensity"] as number };
+        })()
+      : {}),
+  };
+}
+
+function parseParamDef(raw: unknown, index: number): ParamDef {
+  assertObject(raw, `parameters[${index}]`);
+  assertString(raw["key"], `parameters[${index}].key`);
+  assertString(raw["label"], `parameters[${index}].label`);
+  assertNumber(raw["min"], `parameters[${index}].min`);
+  assertNumber(raw["max"], `parameters[${index}].max`);
+  assertNumber(raw["step"], `parameters[${index}].step`);
+  assertNumber(raw["default"], `parameters[${index}].default`);
+
+  const def = raw["default"] as number;
+  const min = raw["min"] as number;
+  const max = raw["max"] as number;
+
+  if (def < min || def > max) {
+    throw new Error(
+      `parameters[${index}] ("${raw["key"]}"): default value ${def} is outside range [${min}, ${max}]`,
+    );
+  }
+
+  return {
+    key: raw["key"] as string,
+    label: raw["label"] as string,
+    min,
+    max,
+    step: raw["step"] as number,
+    default: def,
+    ...(raw["tab"] !== undefined
+      ? (() => {
+          assertString(raw["tab"], `parameters[${index}].tab`);
+          return { tab: raw["tab"] as string };
+        })()
+      : {}),
+  };
+}
+
+function parseColorDef(raw: unknown, index: number): ColorDef {
+  assertObject(raw, `colors[${index}]`);
+  assertString(raw["key"], `colors[${index}].key`);
+  assertString(raw["label"], `colors[${index}].label`);
+  assertString(raw["default"], `colors[${index}].default`);
+  return {
+    key: raw["key"] as string,
+    label: raw["label"] as string,
+    default: raw["default"] as string,
+  };
+}
+
+function parseThemeDef(raw: unknown, index: number): ThemeDef {
+  assertObject(raw, `themes[${index}]`);
+  assertString(raw["name"], `themes[${index}].name`);
+  assertArray(raw["colors"], `themes[${index}].colors`);
+  return {
+    name: raw["name"] as string,
+    colors: (raw["colors"] as unknown[]).map((c, i) => {
+      assertString(c, `themes[${index}].colors[${i}]`);
+      return c;
+    }),
+  };
+}
+
+function parseTabDef(raw: unknown, index: number): TabDef {
+  assertObject(raw, `tabs[${index}]`);
+  assertString(raw["id"], `tabs[${index}].id`);
+  assertString(raw["label"], `tabs[${index}].label`);
+  return { id: raw["id"] as string, label: raw["label"] as string };
+}
+
+function parseSketchState(raw: unknown, prefix = "state"): SketchState {
+  assertObject(raw, prefix);
+  assertNumber(raw["seed"], `${prefix}.seed`);
+  assertObject(raw["params"], `${prefix}.params`);
+  assertArray(raw["colorPalette"], `${prefix}.colorPalette`);
+  return {
+    seed: raw["seed"] as number,
+    params: raw["params"] as Record<string, number>,
+    colorPalette: (raw["colorPalette"] as unknown[]).map((c, i) => {
+      assertString(c, `${prefix}.colorPalette[${i}]`);
+      return c;
+    }),
+  };
+}
+
+function parseSnapshot(raw: unknown, index: number): Snapshot {
+  assertObject(raw, `snapshots[${index}]`);
+  assertString(raw["id"], `snapshots[${index}].id`);
+  assertString(raw["label"], `snapshots[${index}].label`);
+  assertString(raw["timestamp"], `snapshots[${index}].timestamp`);
+  const snapshot: Snapshot = {
+    id: raw["id"] as string,
+    label: raw["label"] as string,
+    timestamp: raw["timestamp"] as string,
+    state: parseSketchState(raw["state"], `snapshots[${index}].state`),
+  };
+  if (typeof raw["thumbnailDataUrl"] === "string") {
+    return { ...snapshot, thumbnailDataUrl: raw["thumbnailDataUrl"] };
+  }
+  return snapshot;
+}
+
+// ---------------------------------------------------------------------------
+// Optionals helper — parse optional fields into a partial
+// ---------------------------------------------------------------------------
+
+function parseOptionals(obj: Obj): Partial<
+  Pick<
+    SketchDefinition,
+    "subtitle" | "agent" | "model" | "skills" | "philosophy" | "tabs" | "themes" | "snapshots"
+  >
+> {
+  const out: Record<string, unknown> = {};
+
+  if (obj["subtitle"] !== undefined) {
+    assertString(obj["subtitle"], "subtitle");
+    out["subtitle"] = obj["subtitle"];
+  }
+  if (obj["agent"] !== undefined) {
+    assertString(obj["agent"], "agent");
+    out["agent"] = obj["agent"];
+  }
+  if (obj["model"] !== undefined) {
+    assertString(obj["model"], "model");
+    out["model"] = obj["model"];
+  }
+  if (obj["skills"] !== undefined) {
+    assertArray(obj["skills"], "skills");
+    out["skills"] = (obj["skills"] as unknown[]).map((s, i) => {
+      assertString(s, `skills[${i}]`);
+      return s;
+    });
+  }
+  if (obj["philosophy"] !== undefined) {
+    assertString(obj["philosophy"], "philosophy");
+    out["philosophy"] = obj["philosophy"];
+  }
+  if (obj["tabs"] !== undefined) {
+    assertArray(obj["tabs"], "tabs");
+    out["tabs"] = (obj["tabs"] as unknown[]).map(parseTabDef);
+  }
+  if (obj["themes"] !== undefined) {
+    assertArray(obj["themes"], "themes");
+    out["themes"] = (obj["themes"] as unknown[]).map(parseThemeDef);
+  }
+  if (obj["snapshots"] !== undefined) {
+    assertArray(obj["snapshots"], "snapshots");
+    out["snapshots"] = (obj["snapshots"] as unknown[]).map(parseSnapshot);
+  }
+
+  return out as Partial<
+    Pick<
+      SketchDefinition,
+      "subtitle" | "agent" | "model" | "skills" | "philosophy" | "tabs" | "themes" | "snapshots"
+    >
+  >;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse and validate a .genart JSON value into a typed SketchDefinition.
+ * Handles v1.0 backward compatibility (missing renderer defaults to p5).
+ *
+ * @param json - Parsed JSON value (output of JSON.parse or plain object).
+ * @throws Error with descriptive message on validation failure.
+ */
+export function parseGenart(json: unknown): SketchDefinition {
+  assertObject(json, "root");
+
+  // Required: genart version
+  if (json["genart"] === undefined) {
+    throw new Error('Missing required field "genart" (format version)');
+  }
+  assertString(json["genart"], "genart");
+
+  // Required: id
+  if (json["id"] === undefined) {
+    throw new Error('Missing required field "id"');
+  }
+  assertString(json["id"], "id");
+
+  // Required: title
+  if (json["title"] === undefined) {
+    throw new Error('Missing required field "title"');
+  }
+  assertString(json["title"], "title");
+
+  // Required: created, modified
+  if (json["created"] === undefined) {
+    throw new Error('Missing required field "created"');
+  }
+  assertString(json["created"], "created");
+  if (json["modified"] === undefined) {
+    throw new Error('Missing required field "modified"');
+  }
+  assertString(json["modified"], "modified");
+
+  // Renderer — default to p5 for v1.0 files
+  const renderer =
+    json["renderer"] !== undefined
+      ? parseRenderer(json["renderer"])
+      : DEFAULT_RENDERER;
+
+  // Required: canvas
+  if (json["canvas"] === undefined) {
+    throw new Error('Missing required field "canvas"');
+  }
+  const canvas = parseCanvas(json["canvas"]);
+
+  // Required: parameters
+  if (json["parameters"] === undefined) {
+    throw new Error('Missing required field "parameters"');
+  }
+  assertArray(json["parameters"], "parameters");
+  const parameters = (json["parameters"] as unknown[]).map(parseParamDef);
+
+  // Validate unique parameter keys
+  const paramKeys = new Set<string>();
+  for (const p of parameters) {
+    if (paramKeys.has(p.key)) {
+      throw new Error(`Duplicate parameter key "${p.key}"`);
+    }
+    paramKeys.add(p.key);
+  }
+
+  // Required: colors
+  if (json["colors"] === undefined) {
+    throw new Error('Missing required field "colors"');
+  }
+  assertArray(json["colors"], "colors");
+  const colors = (json["colors"] as unknown[]).map(parseColorDef);
+
+  // Required: state
+  if (json["state"] === undefined) {
+    throw new Error('Missing required field "state"');
+  }
+  const state = parseSketchState(json["state"]);
+
+  // Required: algorithm
+  if (json["algorithm"] === undefined) {
+    throw new Error('Missing required field "algorithm"');
+  }
+  assertString(json["algorithm"], "algorithm");
+
+  return {
+    genart: json["genart"],
+    id: json["id"],
+    title: json["title"],
+    created: json["created"],
+    modified: json["modified"],
+    renderer,
+    canvas,
+    parameters,
+    colors,
+    state,
+    algorithm: json["algorithm"],
+    ...parseOptionals(json),
+  };
+}
+
+/**
+ * Serialize a SketchDefinition to a formatted JSON string.
+ * The output is a valid .genart file.
+ */
+export function serializeGenart(sketch: SketchDefinition): string {
+  const out: Record<string, unknown> = {
+    genart: sketch.genart,
+    id: sketch.id,
+    title: sketch.title,
+  };
+
+  if (sketch.subtitle !== undefined) out["subtitle"] = sketch.subtitle;
+
+  out["created"] = sketch.created;
+  out["modified"] = sketch.modified;
+
+  if (sketch.agent !== undefined) out["agent"] = sketch.agent;
+  if (sketch.model !== undefined) out["model"] = sketch.model;
+
+  if (sketch.skills !== undefined) out["skills"] = sketch.skills;
+
+  out["renderer"] = sketch.renderer;
+  out["canvas"] = sketch.canvas;
+
+  if (sketch.philosophy !== undefined) out["philosophy"] = sketch.philosophy;
+  if (sketch.tabs !== undefined) out["tabs"] = sketch.tabs;
+
+  out["parameters"] = sketch.parameters;
+  out["colors"] = sketch.colors;
+
+  if (sketch.themes !== undefined) out["themes"] = sketch.themes;
+
+  out["state"] = sketch.state;
+
+  if (sketch.snapshots !== undefined) out["snapshots"] = sketch.snapshots;
+
+  out["algorithm"] = sketch.algorithm;
+
+  return JSON.stringify(out, null, 2);
+}

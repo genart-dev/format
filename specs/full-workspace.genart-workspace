@@ -1,0 +1,87 @@
+{
+  "genart-workspace": "1.0",
+  "id": "full-ws",
+  "title": "Full Workspace",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-19T22:16:44.059Z",
+  "viewport": {
+    "x": 140,
+    "y": 150,
+    "zoom": 0.5
+  },
+  "sketches": [
+    {
+      "file": "full.genart",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Grid Noise",
+      "locked": false,
+      "visible": true
+    },
+    {
+      "file": "canvas2d-sketch.genart",
+      "position": {
+        "x": 612,
+        "y": 0
+      },
+      "label": "Canvas Circles",
+      "locked": false,
+      "visible": true
+    },
+    {
+      "file": "glsl-sketch.genart",
+      "position": {
+        "x": 1224,
+        "y": 0
+      },
+      "label": "Shader Gradient",
+      "locked": false,
+      "visible": true
+    },
+    {
+      "file": "p5-waves.genart",
+      "position": {
+        "x": 0,
+        "y": 612
+      },
+      "label": "Wave Field",
+      "locked": false,
+      "visible": true
+    },
+    {
+      "file": "three-sketch.genart",
+      "position": {
+        "x": 612,
+        "y": 612
+      },
+      "label": "Rotating Cubes",
+      "locked": false,
+      "visible": true
+    },
+    {
+      "file": "svg-sketch.genart",
+      "position": {
+        "x": 1224,
+        "y": 612
+      },
+      "label": "Concentric Rings",
+      "locked": false,
+      "visible": true
+    }
+  ],
+  "groups": [
+    {
+      "id": "renderer-tests",
+      "label": "Renderer Tests",
+      "sketchFiles": [
+        "canvas2d-sketch.genart",
+        "glsl-sketch.genart",
+        "three-sketch.genart",
+        "svg-sketch.genart"
+      ],
+      "color": "#0074D9"
+    }
+  ]
+}

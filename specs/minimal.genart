@@ -1,0 +1,17 @@
+{
+  "genart": "1.1",
+  "id": "minimal-example",
+  "title": "Minimal Example",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  p.setup = () => {\n    p.createCanvas(state.canvas.width, state.canvas.height);\n    p.background(20);\n  };\n  p.draw = () => {};\n  return { initializeSystem() {} };\n}"
+}

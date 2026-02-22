@@ -1,0 +1,67 @@
+{
+  "genart": "1.1",
+  "id": "p5-waves",
+  "title": "p5 Wave Field",
+  "created": "2026-02-17T00:00:00Z",
+  "modified": "2026-02-19T22:16:44.062Z",
+  "renderer": {
+    "type": "p5",
+    "version": "1.x"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "parameters": [
+    {
+      "key": "amplitude",
+      "label": "Amplitude",
+      "min": 5,
+      "max": 80,
+      "step": 1,
+      "default": 30
+    },
+    {
+      "key": "frequency",
+      "label": "Frequency",
+      "min": 0.01,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "rows",
+      "label": "Row Count",
+      "min": 5,
+      "max": 50,
+      "step": 1,
+      "default": 20
+    }
+  ],
+  "colors": [
+    {
+      "key": "bg",
+      "label": "Background",
+      "default": "#0a0a0a"
+    },
+    {
+      "key": "stroke",
+      "label": "Stroke",
+      "default": "#e8e0d4"
+    }
+  ],
+  "state": {
+    "seed": 999,
+    "params": {
+      "amplitude": 37,
+      "frequency": 0.06,
+      "rows": 20
+    },
+    "colorPalette": [
+      "#000000",
+      "#ffffff"
+    ]
+  },
+  "snapshots": [],
+  "algorithm": "function sketch(p, state) {\n  p.setup = () => {\n    p.createCanvas(state.canvas.width, state.canvas.height);\n    p.noiseSeed(state.seed);\n  };\n  p.draw = () => {\n    p.background(state.colorPalette[0]);\n    p.stroke(state.colorPalette[1]);\n    p.strokeWeight(1.5);\n    p.noFill();\n    const rows = state.params.rows;\n    const amp = state.params.amplitude;\n    const freq = state.params.frequency;\n    const spacing = p.height / (rows + 1);\n    for (let r = 1; r <= rows; r++) {\n      p.beginShape();\n      for (let x = 0; x <= p.width; x += 4) {\n        const y = r * spacing + p.noise(x * freq, r * 0.3, state.seed) * amp;\n        p.vertex(x, y);\n      }\n      p.endShape();\n    }\n    p.noLoop();\n  };\n  return { initializeSystem() {} };\n}"
+}

@@ -1,0 +1,15 @@
+{
+  "genart": "1.1",
+  "id": "bad-default",
+  "title": "Default Out of Range",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5" },
+  "canvas": { "width": 600, "height": 600 },
+  "parameters": [
+    { "key": "density", "label": "Density", "min": 10, "max": 100, "step": 1, "default": 999 }
+  ],
+  "colors": [],
+  "state": { "seed": 1, "params": { "density": 999 }, "colorPalette": [] },
+  "algorithm": "function sketch(p, state) { return { initializeSystem() {} }; }"
+}

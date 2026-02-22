@@ -1,0 +1,13 @@
+{
+  "genart": "1.1",
+  "id": "bad-preset",
+  "title": "Invalid Canvas Preset",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5" },
+  "canvas": { "preset": "giant-9999", "width": 9999, "height": 9999 },
+  "parameters": [],
+  "colors": [],
+  "state": { "seed": 1, "params": {}, "colorPalette": [] },
+  "algorithm": "function sketch(p, state) { return { initializeSystem() {} }; }"
+}

@@ -1,0 +1,23 @@
+{
+  "genart": "1.1",
+  "id": "no-snapshots-example",
+  "title": "No Snapshots",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "preset": "square-600", "width": 600, "height": 600 },
+  "parameters": [
+    { "key": "density", "label": "Density", "min": 10, "max": 500, "step": 10, "default": 100 }
+  ],
+  "colors": [
+    { "key": "bg", "label": "Background", "default": "#ffffff" },
+    { "key": "dot", "label": "Dot Color", "default": "#333333" }
+  ],
+  "state": {
+    "seed": 999,
+    "params": { "density": 100 },
+    "colorPalette": ["#ffffff", "#333333"]
+  },
+  "snapshots": [],
+  "algorithm": "function sketch(p, state) {\n  p.setup = () => {\n    p.createCanvas(state.canvas.width, state.canvas.height);\n    p.randomSeed(state.seed);\n  };\n  p.draw = () => {\n    p.background(state.colorPalette[0]);\n    p.fill(state.colorPalette[1]);\n    p.noStroke();\n    for (let i = 0; i < state.params.density; i++) {\n      p.ellipse(p.random(p.width), p.random(p.height), 4, 4);\n    }\n    p.noLoop();\n  };\n  return { initializeSystem() {} };\n}"
+}

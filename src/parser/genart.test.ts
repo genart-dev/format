@@ -1,0 +1,204 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { parseGenart, serializeGenart } from "./genart.js";
+
+const SPECS_DIR = resolve(__dirname, "../../specs");
+const INVALID_DIR = resolve(SPECS_DIR, "invalid");
+
+function loadFixture(filename: string): unknown {
+  const raw = readFileSync(resolve(SPECS_DIR, filename), "utf-8");
+  return JSON.parse(raw);
+}
+
+function loadInvalid(filename: string): unknown {
+  const raw = readFileSync(resolve(INVALID_DIR, filename), "utf-8");
+  return JSON.parse(raw);
+}
+
+// ---------------------------------------------------------------------------
+// Valid files
+// ---------------------------------------------------------------------------
+
+describe("parseGenart — valid fixtures", () => {
+  it("parses minimal.genart", () => {
+    const result = parseGenart(loadFixture("minimal.genart"));
+    expect(result.id).toBe("minimal-example");
+    expect(result.genart).toBe("1.1");
+    expect(result.renderer).toEqual({ type: "p5", version: "1.x" });
+    expect(result.canvas).toEqual({ width: 1200, height: 1200 });
+    expect(result.parameters).toEqual([]);
+    expect(result.colors).toEqual([]);
+    expect(result.state.seed).toBe(42);
+    expect(result.algorithm).toContain("function sketch");
+  });
+
+  it("parses full.genart with all optional fields", () => {
+    const result = parseGenart(loadFixture("full.genart"));
+    expect(result.id).toBe("full-example");
+    expect(result.subtitle).toBe(
+      "Every optional field populated for parser testing.",
+    );
+    expect(result.agent).toBe("claude-code");
+    expect(result.model).toBe("claude-opus-4-6");
+    expect(result.skills).toEqual([
+      "typographic-contrast",
+      "visual-elements-in-grids",
+    ]);
+    expect(result.renderer).toEqual({ type: "p5", version: "1.x" });
+    expect(result.canvas.width).toBe(512);
+    expect(result.canvas.height).toBe(512);
+    expect(result.canvas.pixelDensity).toBe(2);
+    expect(result.philosophy).toContain("# Full Example");
+    expect(result.tabs).toHaveLength(3);
+    expect(result.parameters).toHaveLength(4);
+    expect(result.colors).toHaveLength(3);
+    expect(result.themes).toHaveLength(3);
+    expect(result.snapshots).toHaveLength(1);
+    expect(result.snapshots![0]!.id).toBe("snapshot-001");
+  });
+
+  it("parses minimal.genart without agent/model fields", () => {
+    const result = parseGenart(loadFixture("minimal.genart"));
+    expect(result.agent).toBeUndefined();
+    expect(result.model).toBeUndefined();
+  });
+
+  it("defaults renderer to p5 for v1.0 files (v1-no-renderer.genart)", () => {
+    const result = parseGenart(loadFixture("v1-no-renderer.genart"));
+    expect(result.genart).toBe("1.0");
+    expect(result.renderer).toEqual({ type: "p5" });
+    expect(result.id).toBe("legacy-no-renderer");
+  });
+
+  it("parses canvas2d-sketch.genart", () => {
+    const result = parseGenart(loadFixture("canvas2d-sketch.genart"));
+    expect(result.renderer.type).toBe("canvas2d");
+    expect(result.parameters).toHaveLength(2);
+    expect(result.colors).toHaveLength(2);
+  });
+
+  it("parses glsl-sketch.genart", () => {
+    const result = parseGenart(loadFixture("glsl-sketch.genart"));
+    expect(result.renderer.type).toBe("glsl");
+    expect(result.algorithm).toContain("#version 300 es");
+  });
+
+  it("parses three-sketch.genart", () => {
+    const result = parseGenart(loadFixture("three-sketch.genart"));
+    expect(result.renderer).toEqual({ type: "three", version: "0.160.x" });
+    expect(result.canvas.width).toBe(512);
+    expect(result.canvas.height).toBe(512);
+    expect(result.themes).toHaveLength(2);
+    expect(result.snapshots).toHaveLength(1);
+  });
+
+  it("parses svg-sketch.genart", () => {
+    const result = parseGenart(loadFixture("svg-sketch.genart"));
+    expect(result.renderer.type).toBe("svg");
+    expect(result.snapshots).toEqual([]);
+  });
+
+  it("parses no-snapshots.genart (empty snapshots array)", () => {
+    const result = parseGenart(loadFixture("no-snapshots.genart"));
+    expect(result.canvas.preset).toBe("square-600");
+    expect(result.snapshots).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invalid files
+// ---------------------------------------------------------------------------
+
+describe("parseGenart — invalid fixtures", () => {
+  it("rejects missing-id.genart", () => {
+    expect(() => parseGenart(loadInvalid("missing-id.genart"))).toThrow(
+      'Missing required field "id"',
+    );
+  });
+
+  it("rejects missing-algorithm.genart", () => {
+    expect(() =>
+      parseGenart(loadInvalid("missing-algorithm.genart")),
+    ).toThrow('Missing required field "algorithm"');
+  });
+
+  it("rejects invalid-renderer-type.genart", () => {
+    expect(() =>
+      parseGenart(loadInvalid("invalid-renderer-type.genart")),
+    ).toThrow(/Unknown renderer type "unity"/);
+  });
+
+  it("rejects invalid-canvas-preset.genart", () => {
+    expect(() =>
+      parseGenart(loadInvalid("invalid-canvas-preset.genart")),
+    ).toThrow(/Unknown canvas preset "giant-9999"/);
+  });
+
+  it("rejects duplicate-param-keys.genart", () => {
+    expect(() =>
+      parseGenart(loadInvalid("duplicate-param-keys.genart")),
+    ).toThrow(/Duplicate parameter key "margin"/);
+  });
+
+  it("rejects param-default-out-of-range.genart", () => {
+    expect(() =>
+      parseGenart(loadInvalid("param-default-out-of-range.genart")),
+    ).toThrow(/default value 999 is outside range \[10, 100\]/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Round-trip serialization
+// ---------------------------------------------------------------------------
+
+describe("serializeGenart — round-trip", () => {
+  const fixtures = [
+    "minimal.genart",
+    "full.genart",
+    "canvas2d-sketch.genart",
+    "glsl-sketch.genart",
+    "three-sketch.genart",
+    "svg-sketch.genart",
+    "no-snapshots.genart",
+  ];
+
+  for (const file of fixtures) {
+    it(`round-trips ${file}`, () => {
+      const original = loadFixture(file);
+      const parsed = parseGenart(original);
+      const serialized = serializeGenart(parsed);
+      const reparsed = parseGenart(JSON.parse(serialized));
+      // Compare the parsed objects — structurally equivalent
+      expect(reparsed).toEqual(parsed);
+    });
+  }
+
+  it("round-trips snapshot thumbnailDataUrl", () => {
+    const parsed = parseGenart(loadFixture("full.genart"));
+    // Inject a thumbnailDataUrl into the first snapshot
+    const withThumb: typeof parsed = {
+      ...parsed,
+      snapshots: parsed.snapshots!.map((s, i) =>
+        i === 0 ? { ...s, thumbnailDataUrl: "data:image/jpeg;base64,/9j/AAAA" } : s,
+      ),
+    };
+    const serialized = serializeGenart(withThumb);
+    const reparsed = parseGenart(JSON.parse(serialized));
+    expect(reparsed.snapshots![0]!.thumbnailDataUrl).toBe("data:image/jpeg;base64,/9j/AAAA");
+  });
+
+  it("omits thumbnailDataUrl when not present in snapshot", () => {
+    const parsed = parseGenart(loadFixture("full.genart"));
+    expect(parsed.snapshots![0]!.thumbnailDataUrl).toBeUndefined();
+  });
+
+  it("round-trips v1-no-renderer.genart (with added default renderer)", () => {
+    const original = loadFixture("v1-no-renderer.genart");
+    const parsed = parseGenart(original);
+    expect(parsed.renderer).toEqual({ type: "p5" });
+    const serialized = serializeGenart(parsed);
+    const reparsed = parseGenart(JSON.parse(serialized));
+    expect(reparsed).toEqual(parsed);
+  });
+});

@@ -1,0 +1,16 @@
+{
+  "genart": "1.1",
+  "id": "dup-params",
+  "title": "Duplicate Parameter Keys",
+  "created": "2026-02-14T00:00:00Z",
+  "modified": "2026-02-14T00:00:00Z",
+  "renderer": { "type": "p5" },
+  "canvas": { "width": 600, "height": 600 },
+  "parameters": [
+    { "key": "margin", "label": "Margin", "min": 0, "max": 100, "step": 1, "default": 50 },
+    { "key": "margin", "label": "Also Margin", "min": 0, "max": 200, "step": 1, "default": 100 }
+  ],
+  "colors": [],
+  "state": { "seed": 1, "params": { "margin": 50 }, "colorPalette": [] },
+  "algorithm": "function sketch(p, state) { return { initializeSystem() {} }; }"
+}

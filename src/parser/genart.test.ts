@@ -104,6 +104,59 @@ describe("parseGenart — valid fixtures", () => {
     expect(result.canvas.preset).toBe("square-600");
     expect(result.snapshots).toEqual([]);
   });
+
+  it("parses components-shorthand.genart (string shorthand)", () => {
+    const result = parseGenart(loadFixture("components-shorthand.genart"));
+    expect(result.genart).toBe("1.2");
+    expect(result.components).toEqual({
+      prng: "^1.0.0",
+      math: "^1.0.0",
+    });
+    expect(result.algorithm).toContain("mulberry32");
+  });
+
+  it("parses components-resolved.genart (full resolved form)", () => {
+    const result = parseGenart(loadFixture("components-resolved.genart"));
+    expect(result.genart).toBe("1.2");
+    expect(result.components).toBeDefined();
+    const prng = result.components!["prng"];
+    expect(typeof prng).toBe("object");
+    expect((prng as { version: string }).version).toBe("1.0.0");
+    expect((prng as { code: string }).code).toContain("mulberry32");
+    expect((prng as { exports: string[] }).exports).toEqual(["mulberry32", "sfc32"]);
+    const noise = result.components!["noise-2d"];
+    expect(typeof noise).toBe("object");
+    expect((noise as { exports: string[] }).exports).toEqual(["perlin2D", "simplex2D", "fbm2D"]);
+  });
+
+  it("parses components-inline.genart (code-only, no version)", () => {
+    const result = parseGenart(loadFixture("components-inline.genart"));
+    expect(result.genart).toBe("1.2");
+    const myRng = result.components!["my-rng"];
+    expect(typeof myRng).toBe("object");
+    expect((myRng as { version?: string }).version).toBeUndefined();
+    expect((myRng as { code: string }).code).toContain("xorshift32");
+    expect((myRng as { exports: string[] }).exports).toEqual(["xorshift32"]);
+  });
+
+  it("parses components-mixed.genart (mix of shorthand and object forms)", () => {
+    const result = parseGenart(loadFixture("components-mixed.genart"));
+    expect(result.genart).toBe("1.2");
+    expect(result.components!["prng"]).toBe("^1.0.0");
+    const math = result.components!["math"];
+    expect(typeof math).toBe("object");
+    expect((math as { version: string }).version).toBe("1.0.0");
+    expect((math as { code: string }).code).toContain("lerp");
+    const helper = result.components!["my-helper"];
+    expect(typeof helper).toBe("object");
+    expect((helper as { version?: string }).version).toBeUndefined();
+    expect((helper as { code: string }).code).toContain("myHelper");
+  });
+
+  it("parses files without components (backward compatible)", () => {
+    const result = parseGenart(loadFixture("minimal.genart"));
+    expect(result.components).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -146,6 +199,12 @@ describe("parseGenart — invalid fixtures", () => {
       parseGenart(loadInvalid("param-default-out-of-range.genart")),
     ).toThrow(/default value 999 is outside range \[10, 100\]/);
   });
+
+  it("rejects component with neither version nor code", () => {
+    expect(() =>
+      parseGenart(loadInvalid("invalid-component-no-version-no-code.genart")),
+    ).toThrow(/must have at least "version" or "code"/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -161,6 +220,10 @@ describe("serializeGenart — round-trip", () => {
     "three-sketch.genart",
     "svg-sketch.genart",
     "no-snapshots.genart",
+    "components-shorthand.genart",
+    "components-resolved.genart",
+    "components-inline.genart",
+    "components-mixed.genart",
   ];
 
   for (const file of fixtures) {

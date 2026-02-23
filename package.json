@@ -1,6 +1,6 @@
 {
   "name": "@genart-dev/format",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "File format types, parsers, and canvas presets for the .genart format",
   "type": "module",
   "main": "./dist/index.cjs",

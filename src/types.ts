@@ -120,6 +120,27 @@ export interface Snapshot {
 }
 
 // ---------------------------------------------------------------------------
+// Sketch Components
+// ---------------------------------------------------------------------------
+
+/**
+ * A component value in the .genart file.
+ * String = registry version range (e.g., "^1.0.0").
+ * Object = expanded form with optional cached source.
+ */
+export type SketchComponentValue = string | SketchComponentDef;
+
+/** Expanded component definition with optional cached source. */
+export interface SketchComponentDef {
+  /** SemVer version or range. Present for registry components. */
+  readonly version?: string;
+  /** Source code. Present for inline or cache-resolved components. */
+  readonly code?: string;
+  /** Exported function/variable names. */
+  readonly exports?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -143,6 +164,11 @@ export interface SketchDefinition {
   readonly model?: string;
   /** Design knowledge skills used. */
   readonly skills?: readonly string[];
+  /** Reusable function components available to the algorithm.
+   *  Keyed by component name (bare identifier, e.g., "prng", "noise-2d").
+   *  String values are semver ranges resolved from the component registry.
+   *  Object values provide inline code or cached source. */
+  readonly components?: Readonly<Record<string, SketchComponentValue>>;
   /** Rendering engine specification. */
   readonly renderer: RendererSpec;
   /** Canvas dimensions. */

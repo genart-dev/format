@@ -1,0 +1,23 @@
+{
+  "genart": "1.2",
+  "id": "components-inline",
+  "title": "Components Inline",
+  "created": "2026-02-23T00:00:00Z",
+  "modified": "2026-02-23T00:00:00Z",
+  "components": {
+    "my-rng": {
+      "code": "function xorshift32(seed) {\n  return function() {\n    seed ^= seed << 13;\n    seed ^= seed >> 17;\n    seed ^= seed << 5;\n    return (seed >>> 0) / 4294967296;\n  };\n}",
+      "exports": ["xorshift32"]
+    }
+  },
+  "renderer": { "type": "canvas2d" },
+  "canvas": { "width": 800, "height": 600 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 99,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(ctx, state) {\n  const rng = xorshift32(state.seed);\n  return { initializeSystem() {} };\n}"
+}

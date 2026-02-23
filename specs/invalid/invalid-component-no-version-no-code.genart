@@ -1,0 +1,22 @@
+{
+  "genart": "1.2",
+  "id": "invalid-component",
+  "title": "Invalid Component",
+  "created": "2026-02-23T00:00:00Z",
+  "modified": "2026-02-23T00:00:00Z",
+  "components": {
+    "bad-component": {
+      "exports": ["foo"]
+    }
+  },
+  "renderer": { "type": "p5" },
+  "canvas": { "width": 800, "height": 800 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 1,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) { return { initializeSystem() {} }; }"
+}

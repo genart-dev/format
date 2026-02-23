@@ -1,0 +1,21 @@
+{
+  "genart": "1.2",
+  "id": "components-shorthand",
+  "title": "Components Shorthand",
+  "created": "2026-02-23T00:00:00Z",
+  "modified": "2026-02-23T00:00:00Z",
+  "components": {
+    "prng": "^1.0.0",
+    "math": "^1.0.0"
+  },
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  const rng = mulberry32(state.seed);\n  const x = lerp(0, p.width, rng());\n  return { initializeSystem() {} };\n}"
+}

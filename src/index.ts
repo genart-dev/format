@@ -10,6 +10,8 @@ export type {
   TabDef,
   SketchState,
   Snapshot,
+  SketchComponentValue,
+  SketchComponentDef,
   SketchDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,

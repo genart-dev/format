@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 .npmrc
 *.DS_Store
+src/.DS_Store

@@ -1,0 +1,29 @@
+{
+  "genart": "1.2",
+  "id": "components-mixed",
+  "title": "Components Mixed",
+  "created": "2026-02-23T00:00:00Z",
+  "modified": "2026-02-23T00:00:00Z",
+  "components": {
+    "prng": "^1.0.0",
+    "math": {
+      "version": "1.0.0",
+      "code": "function lerp(a, b, t) { return a + (b - a) * t; }\nfunction clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }",
+      "exports": ["lerp", "clamp"]
+    },
+    "my-helper": {
+      "code": "function myHelper(x) { return x * 2; }",
+      "exports": ["myHelper"]
+    }
+  },
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  const rng = mulberry32(state.seed);\n  const val = lerp(0, myHelper(100), rng());\n  return { initializeSystem() {} };\n}"
+}

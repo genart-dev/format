@@ -1,5 +1,7 @@
 import type {
   SketchDefinition,
+  SketchComponentValue,
+  SketchComponentDef,
   RendererType,
   RendererSpec,
   CanvasSpec,
@@ -202,6 +204,61 @@ function parseSnapshot(raw: unknown, index: number): Snapshot {
   return snapshot;
 }
 
+function parseComponentValue(
+  raw: unknown,
+  name: string,
+): SketchComponentValue {
+  if (typeof raw === "string") {
+    if (raw.length === 0) {
+      throw new Error(`components["${name}"] string value must not be empty`);
+    }
+    return raw;
+  }
+
+  assertObject(raw, `components["${name}"]`);
+  const obj = raw as Obj;
+  const def: Record<string, unknown> = {};
+
+  if (obj["version"] !== undefined) {
+    assertString(obj["version"], `components["${name}"].version`);
+    def["version"] = obj["version"];
+  }
+  if (obj["code"] !== undefined) {
+    assertString(obj["code"], `components["${name}"].code`);
+    def["code"] = obj["code"];
+  }
+  if (obj["exports"] !== undefined) {
+    assertArray(obj["exports"], `components["${name}"].exports`);
+    def["exports"] = (obj["exports"] as unknown[]).map((e, i) => {
+      assertString(e, `components["${name}"].exports[${i}]`);
+      return e;
+    });
+  }
+
+  // At least one of version or code must be present
+  if (def["version"] === undefined && def["code"] === undefined) {
+    throw new Error(
+      `components["${name}"] must have at least "version" or "code"`,
+    );
+  }
+
+  return def as unknown as SketchComponentDef;
+}
+
+function parseComponents(
+  raw: unknown,
+): Readonly<Record<string, SketchComponentValue>> {
+  assertObject(raw, "components");
+  const result: Record<string, SketchComponentValue> = {};
+  for (const [key, value] of Object.entries(raw as Obj)) {
+    if (key.length === 0) {
+      throw new Error("components key must not be empty");
+    }
+    result[key] = parseComponentValue(value, key);
+  }
+  return result;
+}
+
 // ---------------------------------------------------------------------------
 // Optionals helper — parse optional fields into a partial
 // ---------------------------------------------------------------------------
@@ -209,7 +266,7 @@ function parseSnapshot(raw: unknown, index: number): Snapshot {
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "components" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -232,6 +289,9 @@ function parseOptionals(obj: Obj): Partial<
       assertString(s, `skills[${i}]`);
       return s;
     });
+  }
+  if (obj["components"] !== undefined) {
+    out["components"] = parseComponents(obj["components"]);
   }
   if (obj["philosophy"] !== undefined) {
     assertString(obj["philosophy"], "philosophy");
@@ -383,6 +443,10 @@ export function serializeGenart(sketch: SketchDefinition): string {
   if (sketch.model !== undefined) out["model"] = sketch.model;
 
   if (sketch.skills !== undefined) out["skills"] = sketch.skills;
+
+  if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
+    out["components"] = sketch.components;
+  }
 
   out["renderer"] = sketch.renderer;
   out["canvas"] = sketch.canvas;

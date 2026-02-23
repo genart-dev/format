@@ -165,6 +165,10 @@ The `specs/` directory contains concrete examples of valid and invalid `.genart`
 | [`@genart-dev/core`](https://github.com/genart-dev/core) | Renderer adapters + skill registry (depends on format) |
 | [`@genart-dev/mcp-server`](https://github.com/genart-dev/mcp-server) | 33-tool MCP server + CLI (depends on core) |
 
+## Support
+
+Questions, bugs, or feedback — [support@genart.dev](mailto:support@genart.dev) or [open an issue](https://github.com/genart-dev/format/issues).
+
 ## License
 
 MIT

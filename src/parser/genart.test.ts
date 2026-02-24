@@ -157,6 +157,43 @@ describe("parseGenart — valid fixtures", () => {
     const result = parseGenart(loadFixture("minimal.genart"));
     expect(result.components).toBeUndefined();
   });
+
+  it("parses layers-basic.genart (text + grain layers)", () => {
+    const result = parseGenart(loadFixture("layers-basic.genart"));
+    expect(result.genart).toBe("1.2");
+    expect(result.layers).toHaveLength(2);
+    expect(result.layers![0]!.type).toBe("typography:text");
+    expect(result.layers![0]!.name).toBe("Title Text");
+    expect(result.layers![0]!.blendMode).toBe("normal");
+    expect(result.layers![1]!.type).toBe("filter:grain");
+    expect(result.layers![1]!.opacity).toBe(0.5);
+    expect(result.layers![1]!.blendMode).toBe("overlay");
+  });
+
+  it("parses layers-with-components.genart (layers + components coexist)", () => {
+    const result = parseGenart(loadFixture("layers-with-components.genart"));
+    expect(result.genart).toBe("1.2");
+    expect(result.components).toEqual({ prng: "^1.0.0" });
+    expect(result.layers).toHaveLength(1);
+    expect(result.layers![0]!.type).toBe("shape:rect");
+    expect(result.layers![0]!.blendMode).toBe("multiply");
+  });
+
+  it("parses layers-group.genart (group with nested children)", () => {
+    const result = parseGenart(loadFixture("layers-group.genart"));
+    expect(result.layers).toHaveLength(1);
+    const group = result.layers![0]!;
+    expect(group.type).toBe("group");
+    expect(group.children).toHaveLength(2);
+    expect(group.children![0]!.type).toBe("typography:text");
+    expect(group.children![1]!.type).toBe("shape:line");
+    expect(group.children![1]!.locked).toBe(true);
+  });
+
+  it("parses files without layers (backward compatible)", () => {
+    const result = parseGenart(loadFixture("minimal.genart"));
+    expect(result.layers).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -205,6 +242,18 @@ describe("parseGenart — invalid fixtures", () => {
       parseGenart(loadInvalid("invalid-component-no-version-no-code.genart")),
     ).toThrow(/must have at least "version" or "code"/);
   });
+
+  it("rejects layer missing type field", () => {
+    expect(() =>
+      parseGenart(loadInvalid("invalid-layer-missing-type.genart")),
+    ).toThrow(/"layers\[0\]\.type" must be a string/);
+  });
+
+  it("rejects layer with invalid blend mode", () => {
+    expect(() =>
+      parseGenart(loadInvalid("invalid-layer-bad-blend.genart")),
+    ).toThrow(/must be a valid blend mode, got "bogus"/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -224,6 +273,9 @@ describe("serializeGenart — round-trip", () => {
     "components-resolved.genart",
     "components-inline.genart",
     "components-mixed.genart",
+    "layers-basic.genart",
+    "layers-with-components.genart",
+    "layers-group.genart",
   ];
 
   for (const file of fixtures) {

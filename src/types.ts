@@ -141,6 +141,44 @@ export interface SketchComponentDef {
 }
 
 // ---------------------------------------------------------------------------
+// Design Layers
+// ---------------------------------------------------------------------------
+
+/** Blend mode for design layer compositing. Maps to CanvasRenderingContext2D.globalCompositeOperation. */
+export type BlendMode =
+  | 'normal' | 'multiply' | 'screen' | 'overlay'
+  | 'darken' | 'lighten' | 'color-dodge' | 'color-burn'
+  | 'hard-light' | 'soft-light' | 'difference' | 'exclusion'
+  | 'hue' | 'saturation' | 'color' | 'luminosity';
+
+/** Spatial transform for a design layer. */
+export interface LayerTransform {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly rotation: number;
+  readonly scaleX: number;
+  readonly scaleY: number;
+  readonly anchorX: number;
+  readonly anchorY: number;
+}
+
+/** A serialized design layer in the .genart file. */
+export interface DesignLayer {
+  readonly id: string;
+  readonly type: string;
+  readonly name: string;
+  readonly visible: boolean;
+  readonly locked: boolean;
+  readonly opacity: number;
+  readonly blendMode: BlendMode;
+  readonly transform: LayerTransform;
+  readonly properties: Readonly<Record<string, unknown>>;
+  readonly children?: readonly DesignLayer[];
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -169,6 +207,9 @@ export interface SketchDefinition {
    *  String values are semver ranges resolved from the component registry.
    *  Object values provide inline code or cached source. */
   readonly components?: Readonly<Record<string, SketchComponentValue>>;
+  /** Design layers composited on top of the generative sketch output.
+   *  Ordered bottom-to-top. Empty or absent means pure generative sketch. */
+  readonly layers?: readonly DesignLayer[];
   /** Rendering engine specification. */
   readonly renderer: RendererSpec;
   /** Canvas dimensions. */

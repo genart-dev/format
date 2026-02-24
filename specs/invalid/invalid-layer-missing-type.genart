@@ -1,0 +1,39 @@
+{
+  "genart": "1.2",
+  "id": "invalid-layer-missing-type",
+  "title": "Invalid Layer Missing Type",
+  "created": "2026-02-24T00:00:00Z",
+  "modified": "2026-02-24T00:00:00Z",
+  "layers": [
+    {
+      "id": "layer-01",
+      "name": "Bad Layer",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 100,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {}
+    }
+  ],
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  return { initializeSystem() {} };\n}"
+}

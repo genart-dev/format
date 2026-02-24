@@ -1,0 +1,68 @@
+{
+  "genart": "1.2",
+  "id": "layers-basic",
+  "title": "Layers Basic",
+  "created": "2026-02-24T00:00:00Z",
+  "modified": "2026-02-24T00:00:00Z",
+  "layers": [
+    {
+      "id": "layer-text-01",
+      "type": "typography:text",
+      "name": "Title Text",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 100,
+        "y": 50,
+        "width": 400,
+        "height": 60,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "properties": {
+        "text": "Hello World",
+        "fontSize": 48,
+        "fontFamily": "Inter"
+      }
+    },
+    {
+      "id": "layer-grain-01",
+      "type": "filter:grain",
+      "name": "Film Grain",
+      "visible": true,
+      "locked": false,
+      "opacity": 0.5,
+      "blendMode": "overlay",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 1200,
+        "height": 1200,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "intensity": 0.3,
+        "size": 1.5
+      }
+    }
+  ],
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  return { initializeSystem() {} };\n}"
+}

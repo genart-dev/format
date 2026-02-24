@@ -1,0 +1,47 @@
+{
+  "genart": "1.2",
+  "id": "layers-with-components",
+  "title": "Layers With Components",
+  "created": "2026-02-24T00:00:00Z",
+  "modified": "2026-02-24T00:00:00Z",
+  "components": {
+    "prng": "^1.0.0"
+  },
+  "layers": [
+    {
+      "id": "layer-shape-01",
+      "type": "shape:rect",
+      "name": "Background Rect",
+      "visible": true,
+      "locked": false,
+      "opacity": 0.8,
+      "blendMode": "multiply",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 1200,
+        "height": 1200,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "fill": "#ff0000",
+        "stroke": "#000000",
+        "strokeWidth": 2
+      }
+    }
+  ],
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  const rng = mulberry32(state.seed);\n  return { initializeSystem() {} };\n}"
+}

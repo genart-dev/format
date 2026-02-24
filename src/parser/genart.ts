@@ -11,6 +11,9 @@ import type {
   TabDef,
   SketchState,
   Snapshot,
+  BlendMode,
+  DesignLayer,
+  LayerTransform,
 } from "../types.js";
 import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
 
@@ -20,6 +23,13 @@ const VALID_RENDERER_TYPES: readonly RendererType[] = [
   "glsl",
   "canvas2d",
   "svg",
+];
+
+const VALID_BLEND_MODES: readonly BlendMode[] = [
+  "normal", "multiply", "screen", "overlay",
+  "darken", "lighten", "color-dodge", "color-burn",
+  "hard-light", "soft-light", "difference", "exclusion",
+  "hue", "saturation", "color", "luminosity",
 ];
 
 /** Default renderer for v1.0 files that omit the renderer field. */
@@ -260,13 +270,101 @@ function parseComponents(
 }
 
 // ---------------------------------------------------------------------------
+// Layer parsers
+// ---------------------------------------------------------------------------
+
+function parseLayerTransform(value: unknown, field: string): LayerTransform {
+  assertObject(value, field);
+  const obj = value as Obj;
+  const fields = ["x", "y", "width", "height", "rotation", "scaleX", "scaleY", "anchorX", "anchorY"] as const;
+  for (const f of fields) {
+    assertNumber(obj[f], `${field}.${f}`);
+  }
+  return {
+    x: obj["x"] as number,
+    y: obj["y"] as number,
+    width: obj["width"] as number,
+    height: obj["height"] as number,
+    rotation: obj["rotation"] as number,
+    scaleX: obj["scaleX"] as number,
+    scaleY: obj["scaleY"] as number,
+    anchorX: obj["anchorX"] as number,
+    anchorY: obj["anchorY"] as number,
+  };
+}
+
+function parseDesignLayer(value: unknown, path: string): DesignLayer {
+  assertObject(value, path);
+  const obj = value as Obj;
+
+  assertString(obj["id"], `${path}.id`);
+  assertString(obj["type"], `${path}.type`);
+  assertString(obj["name"], `${path}.name`);
+
+  if (typeof obj["visible"] !== "boolean") {
+    throw new Error(`"${path}.visible" must be a boolean`);
+  }
+  if (typeof obj["locked"] !== "boolean") {
+    throw new Error(`"${path}.locked" must be a boolean`);
+  }
+
+  assertNumber(obj["opacity"], `${path}.opacity`);
+  const opacity = obj["opacity"] as number;
+  if (opacity < 0 || opacity > 1) {
+    throw new Error(`"${path}.opacity" must be between 0 and 1, got ${opacity}`);
+  }
+
+  assertString(obj["blendMode"], `${path}.blendMode`);
+  if (!VALID_BLEND_MODES.includes(obj["blendMode"] as BlendMode)) {
+    throw new Error(
+      `"${path}.blendMode" must be a valid blend mode, got "${obj["blendMode"]}". Valid modes: ${VALID_BLEND_MODES.join(", ")}`,
+    );
+  }
+
+  const transform = parseLayerTransform(obj["transform"], `${path}.transform`);
+
+  assertObject(obj["properties"], `${path}.properties`);
+
+  const layer: DesignLayer = {
+    id: obj["id"] as string,
+    type: obj["type"] as string,
+    name: obj["name"] as string,
+    visible: obj["visible"] as boolean,
+    locked: obj["locked"] as boolean,
+    opacity,
+    blendMode: obj["blendMode"] as BlendMode,
+    transform,
+    properties: obj["properties"] as Readonly<Record<string, unknown>>,
+  };
+
+  if (obj["children"] !== undefined) {
+    assertArray(obj["children"], `${path}.children`);
+    return {
+      ...layer,
+      children: (obj["children"] as unknown[]).map((child, i) =>
+        parseDesignLayer(child, `${path}.children[${i}]`),
+      ),
+    };
+  }
+
+  return layer;
+}
+
+function parseLayers(value: unknown): readonly DesignLayer[] {
+  assertArray(value, "layers");
+  return (value as unknown[]).map((item, i) =>
+    parseDesignLayer(item, `layers[${i}]`),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Optionals helper — parse optional fields into a partial
 // ---------------------------------------------------------------------------
 
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "components" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "components" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -293,6 +391,9 @@ function parseOptionals(obj: Obj): Partial<
   if (obj["components"] !== undefined) {
     out["components"] = parseComponents(obj["components"]);
   }
+  if (obj["layers"] !== undefined) {
+    out["layers"] = parseLayers(obj["layers"]);
+  }
   if (obj["philosophy"] !== undefined) {
     assertString(obj["philosophy"], "philosophy");
     out["philosophy"] = obj["philosophy"];
@@ -313,7 +414,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "components" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -446,6 +547,10 @@ export function serializeGenart(sketch: SketchDefinition): string {
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
     out["components"] = sketch.components;
+  }
+
+  if (sketch.layers !== undefined && sketch.layers.length > 0) {
+    out["layers"] = sketch.layers;
   }
 
   out["renderer"] = sketch.renderer;

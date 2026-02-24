@@ -1,0 +1,91 @@
+{
+  "genart": "1.2",
+  "id": "layers-group",
+  "title": "Layers Group",
+  "created": "2026-02-24T00:00:00Z",
+  "modified": "2026-02-24T00:00:00Z",
+  "layers": [
+    {
+      "id": "layer-group-01",
+      "type": "group",
+      "name": "Header Group",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 1200,
+        "height": 300,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {},
+      "children": [
+        {
+          "id": "layer-text-child-01",
+          "type": "typography:text",
+          "name": "Heading",
+          "visible": true,
+          "locked": false,
+          "opacity": 1,
+          "blendMode": "normal",
+          "transform": {
+            "x": 50,
+            "y": 20,
+            "width": 300,
+            "height": 40,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "anchorX": 0.5,
+            "anchorY": 0.5
+          },
+          "properties": {
+            "text": "Title",
+            "fontSize": 36,
+            "fontFamily": "Inter"
+          }
+        },
+        {
+          "id": "layer-shape-child-01",
+          "type": "shape:line",
+          "name": "Divider",
+          "visible": true,
+          "locked": true,
+          "opacity": 0.6,
+          "blendMode": "normal",
+          "transform": {
+            "x": 50,
+            "y": 70,
+            "width": 300,
+            "height": 2,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "anchorX": 0,
+            "anchorY": 0
+          },
+          "properties": {
+            "stroke": "#cccccc",
+            "strokeWidth": 1
+          }
+        }
+      ]
+    }
+  ],
+  "renderer": { "type": "p5", "version": "1.x" },
+  "canvas": { "width": 1200, "height": 1200 },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(p, state) {\n  return { initializeSystem() {} };\n}"
+}

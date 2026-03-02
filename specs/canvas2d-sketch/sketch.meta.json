@@ -1,0 +1,52 @@
+{
+  "title": "Canvas 2D Circles",
+  "id": "canvas2d-circles",
+  "renderer": {
+    "type": "canvas2d"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "parameters": [
+    {
+      "key": "count",
+      "label": "Circle Count",
+      "min": 5,
+      "max": 200,
+      "step": 1,
+      "default": 50
+    },
+    {
+      "key": "maxRadius",
+      "label": "Max Radius",
+      "min": 10,
+      "max": 200,
+      "step": 5,
+      "default": 80
+    }
+  ],
+  "colors": [
+    {
+      "key": "bg",
+      "label": "Background",
+      "default": "#0a0a0a"
+    },
+    {
+      "key": "stroke",
+      "label": "Stroke",
+      "default": "#ffffff"
+    }
+  ],
+  "state": {
+    "seed": 777,
+    "params": {
+      "count": 50,
+      "maxRadius": 80
+    },
+    "colorPalette": [
+      "#0a0a0a",
+      "#ffffff"
+    ]
+  }
+}

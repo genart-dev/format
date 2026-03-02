@@ -1,0 +1,62 @@
+{
+  "title": "p5 Wave Field",
+  "id": "p5-waves",
+  "renderer": {
+    "type": "p5",
+    "version": "1.x"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "parameters": [
+    {
+      "key": "amplitude",
+      "label": "Amplitude",
+      "min": 5,
+      "max": 80,
+      "step": 1,
+      "default": 30
+    },
+    {
+      "key": "frequency",
+      "label": "Frequency",
+      "min": 0.01,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "rows",
+      "label": "Row Count",
+      "min": 5,
+      "max": 50,
+      "step": 1,
+      "default": 20
+    }
+  ],
+  "colors": [
+    {
+      "key": "bg",
+      "label": "Background",
+      "default": "#0a0a0a"
+    },
+    {
+      "key": "stroke",
+      "label": "Stroke",
+      "default": "#e8e0d4"
+    }
+  ],
+  "state": {
+    "seed": 999,
+    "params": {
+      "amplitude": 37,
+      "frequency": 0.06,
+      "rows": 20
+    },
+    "colorPalette": [
+      "#000000",
+      "#ffffff"
+    ]
+  }
+}

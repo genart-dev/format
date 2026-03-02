@@ -1,0 +1,150 @@
+{
+  "title": "Full Example",
+  "id": "full-example",
+  "renderer": {
+    "type": "p5",
+    "version": "1.x"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512,
+    "pixelDensity": 2
+  },
+  "parameters": [
+    {
+      "key": "margin",
+      "label": "Margin",
+      "min": 10,
+      "max": 200,
+      "step": 5,
+      "default": 60,
+      "tab": "grid"
+    },
+    {
+      "key": "cellCount",
+      "label": "Cell Count",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "tab": "grid"
+    },
+    {
+      "key": "noiseScale",
+      "label": "Noise Scale",
+      "min": 0.001,
+      "max": 0.1,
+      "step": 0.001,
+      "default": 0.02,
+      "tab": "form"
+    },
+    {
+      "key": "speed",
+      "label": "Speed",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1,
+      "default": 1,
+      "tab": "animation"
+    }
+  ],
+  "colors": [
+    {
+      "key": "primary",
+      "label": "Primary",
+      "default": "#1a1a1a"
+    },
+    {
+      "key": "secondary",
+      "label": "Secondary",
+      "default": "#f5f0eb"
+    },
+    {
+      "key": "accent",
+      "label": "Accent",
+      "default": "#c4342d"
+    }
+  ],
+  "themes": [
+    {
+      "name": "Typographic",
+      "colors": [
+        "#1a1a1a",
+        "#f5f0eb",
+        "#c4342d"
+      ]
+    },
+    {
+      "name": "Blueprint",
+      "colors": [
+        "#001f3f",
+        "#e8e0d4",
+        "#0074D9"
+      ]
+    },
+    {
+      "name": "Nightfall",
+      "colors": [
+        "#0d0d0d",
+        "#2c2c54",
+        "#ff6348"
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "id": "grid",
+      "label": "Grid"
+    },
+    {
+      "id": "form",
+      "label": "Form"
+    },
+    {
+      "id": "animation",
+      "label": "Animation"
+    }
+  ],
+  "philosophy": "# Full Example\n\nA comprehensive test sketch exercising all format fields.\n\n## Design Intent\n\nThis sketch exists to validate the parser handles every optional field correctly.",
+  "skills": [
+    "typographic-contrast",
+    "visual-elements-in-grids"
+  ],
+  "agent": "claude-code",
+  "model": "claude-opus-4-6",
+  "state": {
+    "seed": 12345,
+    "params": {
+      "margin": 60,
+      "cellCount": 8,
+      "noiseScale": 0.089,
+      "speed": 1
+    },
+    "colorPalette": [
+      "#1a1a1a",
+      "#f5f0eb",
+      "#c4342d"
+    ]
+  },
+  "snapshots": [
+    {
+      "id": "snapshot-001",
+      "label": "Initial state",
+      "timestamp": "2026-02-14T01:00:00Z",
+      "state": {
+        "seed": 12345,
+        "params": {
+          "margin": 60,
+          "cellCount": 8,
+          "noiseScale": 0.02,
+          "speed": 1
+        },
+        "colorPalette": [
+          "#1a1a1a",
+          "#f5f0eb",
+          "#c4342d"
+        ]
+      }
+    }
+  ]
+}

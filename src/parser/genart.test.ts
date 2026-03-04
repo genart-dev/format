@@ -317,3 +317,171 @@ describe("serializeGenart — round-trip", () => {
     expect(reparsed).toEqual(parsed);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Symbols field (format v1.3)
+// ---------------------------------------------------------------------------
+
+const MINIMAL_WITH_SYMBOLS = {
+  genart: "1.3",
+  id: "symbol-test",
+  title: "Symbol Test",
+  created: "2026-03-04T00:00:00.000Z",
+  modified: "2026-03-04T00:00:00.000Z",
+  renderer: { type: "canvas2d" },
+  canvas: { width: 800, height: 600 },
+  parameters: [],
+  colors: [],
+  state: { seed: 42, params: {}, colorPalette: [] },
+  algorithm: "function sketch(ctx, state) { return {}; }",
+  symbols: {
+    "pine-tree": {
+      id: "pine-tree",
+      name: "Pine Tree",
+      style: "geometric",
+      paths: [
+        { d: "M50 5 L80 50 L20 50 Z", fill: "#2d6a4f", role: "canopy" },
+        { d: "M42 50 L58 50 L58 65 L42 65 Z", fill: "#6b4423", role: "trunk" },
+      ],
+      viewBox: "0 0 100 120",
+    },
+    "oak-ref": "oak-tree",
+  },
+};
+
+describe("parseGenart — symbols field", () => {
+  it("parses resolved SketchSymbolDef", () => {
+    const result = parseGenart(MINIMAL_WITH_SYMBOLS);
+    expect(result.symbols).toBeDefined();
+    const sym = result.symbols!["pine-tree"];
+    expect(typeof sym).toBe("object");
+    if (typeof sym === "object") {
+      expect(sym.id).toBe("pine-tree");
+      expect(sym.name).toBe("Pine Tree");
+      expect(sym.style).toBe("geometric");
+      expect(sym.paths).toHaveLength(2);
+      expect(sym.paths[0]!.d).toBe("M50 5 L80 50 L20 50 Z");
+      expect(sym.paths[0]!.fill).toBe("#2d6a4f");
+      expect(sym.paths[0]!.role).toBe("canopy");
+      expect(sym.viewBox).toBe("0 0 100 120");
+    }
+  });
+
+  it("parses string registry reference", () => {
+    const result = parseGenart(MINIMAL_WITH_SYMBOLS);
+    const ref = result.symbols!["oak-ref"];
+    expect(ref).toBe("oak-tree");
+  });
+
+  it("round-trips symbols through serialize/parse", () => {
+    const parsed = parseGenart(MINIMAL_WITH_SYMBOLS);
+    const json = serializeGenart(parsed);
+    const reparsed = parseGenart(JSON.parse(json));
+    expect(reparsed.symbols).toEqual(parsed.symbols);
+    expect(reparsed.genart).toBe("1.3");
+  });
+
+  it("omits symbols field from output when empty", () => {
+    const parsed = parseGenart(loadFixture("minimal.genart"));
+    const json = serializeGenart(parsed);
+    expect(json).not.toContain('"symbols"');
+  });
+
+  it("rejects symbols with missing paths", () => {
+    const invalid = {
+      ...MINIMAL_WITH_SYMBOLS,
+      symbols: {
+        "bad-sym": { id: "bad", viewBox: "0 0 100 100" },
+      },
+    };
+    expect(() => parseGenart(invalid)).toThrow(/paths/);
+  });
+
+  it("rejects symbols with missing viewBox", () => {
+    const invalid = {
+      ...MINIMAL_WITH_SYMBOLS,
+      symbols: {
+        "bad-sym": { id: "bad", paths: [{ d: "M0 0 L10 10" }] },
+      },
+    };
+    expect(() => parseGenart(invalid)).toThrow(/viewBox/);
+  });
+
+  it("parses iconifyId and license on SketchSymbolDef", () => {
+    const input = {
+      ...MINIMAL_WITH_SYMBOLS,
+      symbols: {
+        "ph-cat": {
+          paths: [{ d: "M0 0 L10 10" }],
+          viewBox: "0 0 256 256",
+          iconifyId: "ph:cat",
+          license: "MIT (Phosphor Icons)",
+        },
+      },
+    };
+    const result = parseGenart(input);
+    const sym = result.symbols!["ph-cat"];
+    expect(typeof sym).toBe("object");
+    if (typeof sym === "object") {
+      expect(sym.iconifyId).toBe("ph:cat");
+      expect(sym.license).toBe("MIT (Phosphor Icons)");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// thirdParty field (format v1.3)
+// ---------------------------------------------------------------------------
+
+const MINIMAL_WITH_THIRD_PARTY = {
+  genart: "1.3",
+  id: "tp-test",
+  title: "Third Party Test",
+  created: "2026-03-04T00:00:00.000Z",
+  modified: "2026-03-04T00:00:00.000Z",
+  renderer: { type: "canvas2d" },
+  canvas: { width: 800, height: 600 },
+  parameters: [],
+  colors: [],
+  state: { seed: 1, params: {}, colorPalette: [] },
+  algorithm: "",
+  thirdParty: [
+    {
+      name: "Phosphor Icons",
+      license: "MIT",
+      copyright: "Copyright (c) 2023 Phosphor Icons",
+      url: "https://github.com/phosphor-icons/core",
+    },
+  ],
+};
+
+describe("parseGenart — thirdParty field", () => {
+  it("parses thirdParty notices", () => {
+    const result = parseGenart(MINIMAL_WITH_THIRD_PARTY);
+    expect(result.thirdParty).toHaveLength(1);
+    const notice = result.thirdParty![0]!;
+    expect(notice.name).toBe("Phosphor Icons");
+    expect(notice.license).toBe("MIT");
+    expect(notice.copyright).toBe("Copyright (c) 2023 Phosphor Icons");
+    expect(notice.url).toBe("https://github.com/phosphor-icons/core");
+  });
+
+  it("round-trips thirdParty through serialize/parse", () => {
+    const parsed = parseGenart(MINIMAL_WITH_THIRD_PARTY);
+    const reparsed = parseGenart(JSON.parse(serializeGenart(parsed)));
+    expect(reparsed.thirdParty).toEqual(parsed.thirdParty);
+  });
+
+  it("omits thirdParty from output when absent", () => {
+    const parsed = parseGenart(loadFixture("minimal.genart"));
+    expect(serializeGenart(parsed)).not.toContain('"thirdParty"');
+  });
+
+  it("rejects thirdParty entry missing required fields", () => {
+    const invalid = {
+      ...MINIMAL_WITH_THIRD_PARTY,
+      thirdParty: [{ name: "Foo", license: "MIT" }], // missing copyright and url
+    };
+    expect(() => parseGenart(invalid)).toThrow();
+  });
+});

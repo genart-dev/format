@@ -1,4 +1,29 @@
 // ---------------------------------------------------------------------------
+// Third-party attribution
+// ---------------------------------------------------------------------------
+
+/**
+ * Attribution record for third-party content embedded in a .genart file.
+ *
+ * Required when any content (icons, images, fonts, etc.) is sourced from a
+ * third-party library and embedded verbatim or in derived form. The `thirdParty`
+ * array on `SketchDefinition` aggregates one entry per distinct upstream source.
+ *
+ * Consumers (exporters, display surfaces, CLI tools) should surface these notices
+ * wherever the sketch is distributed or published.
+ */
+export interface ThirdPartyNotice {
+  /** Human-readable library name, e.g. "Phosphor Icons". */
+  readonly name: string;
+  /** SPDX license identifier or short description, e.g. "MIT", "Apache-2.0". */
+  readonly license: string;
+  /** Full copyright line as it appears in the upstream LICENSE file. */
+  readonly copyright: string;
+  /** Canonical URL for the upstream project or license text. */
+  readonly url: string;
+}
+
+// ---------------------------------------------------------------------------
 // Renderer
 // ---------------------------------------------------------------------------
 
@@ -120,6 +145,66 @@ export interface Snapshot {
 }
 
 // ---------------------------------------------------------------------------
+// Symbols
+// ---------------------------------------------------------------------------
+
+/** Broad category for a symbol. */
+export type SymbolCategory =
+  | "nature" | "architecture" | "people" | "vehicles"
+  | "objects" | "animals" | "abstract" | "celestial"
+  | "flora" | "weather";
+
+/** Visual rendering style for a symbol variant. */
+export type SymbolStyle = "geometric" | "organic" | "silhouette" | "sketch";
+
+/** A single path element within a symbol. */
+export interface SymbolPath {
+  /** SVG path d attribute. */
+  readonly d: string;
+  /** Fill color (hex, e.g. "#3a5c2e"). */
+  readonly fill?: string;
+  /** Stroke color (hex). */
+  readonly stroke?: string;
+  /** Stroke width. */
+  readonly strokeWidth?: number;
+  /** Semantic role, e.g. "trunk", "canopy", "hull", "sail". */
+  readonly role?: string;
+}
+
+/** A variant of a symbol — a set of paths with a viewBox. */
+export interface SymbolVariant {
+  readonly paths: readonly SymbolPath[];
+  readonly viewBox: string; // "0 0 100 100"
+}
+
+/**
+ * A symbol value stored in a .genart file.
+ * String = registry ID reference (not yet resolved).
+ * Object = resolved/inline definition with SVG paths.
+ */
+export type SketchSymbolValue = string | SketchSymbolDef;
+
+/** Resolved symbol definition with paths and viewBox. */
+export interface SketchSymbolDef {
+  /** Registry symbol ID, if resolved from registry. */
+  readonly id?: string;
+  /** Human-readable name. */
+  readonly name?: string;
+  /** Style variant this definition represents. */
+  readonly style?: SymbolStyle;
+  /** Ordered list of SVG paths. */
+  readonly paths: readonly SymbolPath[];
+  /** SVG viewBox string, e.g. "0 0 100 100". */
+  readonly viewBox: string;
+  /** True for AI-generated custom symbols. */
+  readonly custom?: boolean;
+  /** Iconify icon identifier, e.g. "ph:cat". Present for Iconify-sourced symbols. */
+  readonly iconifyId?: string;
+  /** License string, e.g. "MIT (Phosphor Icons)". Present for Iconify-sourced symbols. */
+  readonly license?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Components
 // ---------------------------------------------------------------------------
 
@@ -207,6 +292,11 @@ export interface SketchDefinition {
    *  String values are semver ranges resolved from the component registry.
    *  Object values provide inline code or cached source. */
   readonly components?: Readonly<Record<string, SketchComponentValue>>;
+  /** Symbol data available to the algorithm via `__symbols__`.
+   *  Keyed by symbol ID (e.g., "pine-tree", "sailboat").
+   *  String values are registry ID references (unresolved).
+   *  Object values are resolved definitions with SVG paths. */
+  readonly symbols?: Readonly<Record<string, SketchSymbolValue>>;
   /** Design layers composited on top of the generative sketch output.
    *  Ordered bottom-to-top. Empty or absent means pure generative sketch. */
   readonly layers?: readonly DesignLayer[];
@@ -214,6 +304,8 @@ export interface SketchDefinition {
   readonly renderer: RendererSpec;
   /** Canvas dimensions. */
   readonly canvas: CanvasSpec;
+  /** Third-party attribution notices for embedded content (icons, fonts, etc.). */
+  readonly thirdParty?: readonly ThirdPartyNotice[];
   /** Markdown philosophy / design intent documentation. */
   readonly philosophy?: string;
   /** Parameter grouping tabs. */

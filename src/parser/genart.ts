@@ -2,6 +2,9 @@ import type {
   SketchDefinition,
   SketchComponentValue,
   SketchComponentDef,
+  SketchSymbolValue,
+  SketchSymbolDef,
+  SymbolPath,
   RendererType,
   RendererSpec,
   CanvasSpec,
@@ -14,6 +17,7 @@ import type {
   BlendMode,
   DesignLayer,
   LayerTransform,
+  ThirdPartyNotice,
 } from "../types.js";
 import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
 
@@ -270,6 +274,105 @@ function parseComponents(
 }
 
 // ---------------------------------------------------------------------------
+// Symbol parsers
+// ---------------------------------------------------------------------------
+
+function parseSymbolPath(raw: unknown, path: string): SymbolPath {
+  assertObject(raw, path);
+  const obj = raw as Obj;
+  assertString(obj["d"], `${path}.d`);
+  const result: Record<string, unknown> = { d: obj["d"] };
+  if (obj["fill"] !== undefined) {
+    assertString(obj["fill"], `${path}.fill`);
+    result["fill"] = obj["fill"];
+  }
+  if (obj["stroke"] !== undefined) {
+    assertString(obj["stroke"], `${path}.stroke`);
+    result["stroke"] = obj["stroke"];
+  }
+  if (obj["strokeWidth"] !== undefined) {
+    assertNumber(obj["strokeWidth"], `${path}.strokeWidth`);
+    result["strokeWidth"] = obj["strokeWidth"];
+  }
+  if (obj["role"] !== undefined) {
+    assertString(obj["role"], `${path}.role`);
+    result["role"] = obj["role"];
+  }
+  return result as unknown as SymbolPath;
+}
+
+function parseSymbolValue(raw: unknown, name: string): SketchSymbolValue {
+  if (typeof raw === "string") {
+    if (raw.length === 0) {
+      throw new Error(`symbols["${name}"] string value must not be empty`);
+    }
+    return raw;
+  }
+
+  assertObject(raw, `symbols["${name}"]`);
+  const obj = raw as Obj;
+  const def: Record<string, unknown> = {};
+
+  if (obj["id"] !== undefined) {
+    assertString(obj["id"], `symbols["${name}"].id`);
+    def["id"] = obj["id"];
+  }
+  if (obj["name"] !== undefined) {
+    assertString(obj["name"], `symbols["${name}"].name`);
+    def["name"] = obj["name"];
+  }
+  if (obj["style"] !== undefined) {
+    assertString(obj["style"], `symbols["${name}"].style`);
+    def["style"] = obj["style"];
+  }
+
+  if (obj["paths"] === undefined) {
+    throw new Error(`symbols["${name}"] must have "paths"`);
+  }
+  assertArray(obj["paths"], `symbols["${name}"].paths`);
+  def["paths"] = (obj["paths"] as unknown[]).map((p, i) =>
+    parseSymbolPath(p, `symbols["${name}"].paths[${i}]`),
+  );
+
+  if (obj["viewBox"] === undefined) {
+    throw new Error(`symbols["${name}"] must have "viewBox"`);
+  }
+  assertString(obj["viewBox"], `symbols["${name}"].viewBox`);
+  def["viewBox"] = obj["viewBox"];
+
+  if (obj["custom"] !== undefined) {
+    if (typeof obj["custom"] !== "boolean") {
+      throw new Error(`symbols["${name}"].custom must be a boolean`);
+    }
+    def["custom"] = obj["custom"];
+  }
+  if (obj["iconifyId"] !== undefined) {
+    assertString(obj["iconifyId"], `symbols["${name}"].iconifyId`);
+    def["iconifyId"] = obj["iconifyId"];
+  }
+  if (obj["license"] !== undefined) {
+    assertString(obj["license"], `symbols["${name}"].license`);
+    def["license"] = obj["license"];
+  }
+
+  return def as unknown as SketchSymbolDef;
+}
+
+function parseSymbols(
+  raw: unknown,
+): Readonly<Record<string, SketchSymbolValue>> {
+  assertObject(raw, "symbols");
+  const result: Record<string, SketchSymbolValue> = {};
+  for (const [key, value] of Object.entries(raw as Obj)) {
+    if (key.length === 0) {
+      throw new Error("symbols key must not be empty");
+    }
+    result[key] = parseSymbolValue(value, key);
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Layer parsers
 // ---------------------------------------------------------------------------
 
@@ -364,7 +467,7 @@ function parseLayers(value: unknown): readonly DesignLayer[] {
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "components" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -391,6 +494,21 @@ function parseOptionals(obj: Obj): Partial<
   if (obj["components"] !== undefined) {
     out["components"] = parseComponents(obj["components"]);
   }
+  if (obj["symbols"] !== undefined) {
+    out["symbols"] = parseSymbols(obj["symbols"]);
+  }
+  if (obj["thirdParty"] !== undefined) {
+    assertArray(obj["thirdParty"], "thirdParty");
+    out["thirdParty"] = (obj["thirdParty"] as unknown[]).map((entry, i) => {
+      assertObject(entry, `thirdParty[${i}]`);
+      const e = entry as Obj;
+      assertString(e["name"], `thirdParty[${i}].name`);
+      assertString(e["license"], `thirdParty[${i}].license`);
+      assertString(e["copyright"], `thirdParty[${i}].copyright`);
+      assertString(e["url"], `thirdParty[${i}].url`);
+      return { name: e["name"], license: e["license"], copyright: e["copyright"], url: e["url"] } as ThirdPartyNotice;
+    });
+  }
   if (obj["layers"] !== undefined) {
     out["layers"] = parseLayers(obj["layers"]);
   }
@@ -414,7 +532,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "components" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -547,6 +665,14 @@ export function serializeGenart(sketch: SketchDefinition): string {
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
     out["components"] = sketch.components;
+  }
+
+  if (sketch.symbols !== undefined && Object.keys(sketch.symbols).length > 0) {
+    out["symbols"] = sketch.symbols;
+  }
+
+  if (sketch.thirdParty !== undefined && sketch.thirdParty.length > 0) {
+    out["thirdParty"] = sketch.thirdParty;
   }
 
   if (sketch.layers !== undefined && sketch.layers.length > 0) {

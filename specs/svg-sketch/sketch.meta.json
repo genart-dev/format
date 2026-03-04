@@ -1,0 +1,52 @@
+{
+  "title": "SVG Concentric Rings",
+  "id": "svg-concentric-rings",
+  "renderer": {
+    "type": "svg"
+  },
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "parameters": [
+    {
+      "key": "ringCount",
+      "label": "Ring Count",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "strokeWidth",
+      "label": "Stroke Width",
+      "min": 0.5,
+      "max": 8,
+      "step": 0.5,
+      "default": 2
+    }
+  ],
+  "colors": [
+    {
+      "key": "bg",
+      "label": "Background",
+      "default": "#fafafa"
+    },
+    {
+      "key": "stroke",
+      "label": "Stroke",
+      "default": "#1a1a1a"
+    }
+  ],
+  "state": {
+    "seed": 555,
+    "params": {
+      "ringCount": 10,
+      "strokeWidth": 2
+    },
+    "colorPalette": [
+      "#3a3131",
+      "#ffffff"
+    ]
+  }
+}

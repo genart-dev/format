@@ -3,7 +3,7 @@
   "id": "glsl-gradient",
   "title": "GLSL Gradient",
   "created": "2026-03-02T05:06:37.753Z",
-  "modified": "2026-03-02T05:06:37.753Z",
+  "modified": "2026-03-03T18:39:34.394Z",
   "renderer": {
     "type": "glsl"
   },

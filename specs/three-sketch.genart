@@ -3,7 +3,7 @@
   "id": "three-cubes",
   "title": "Three.js Rotating Cubes",
   "created": "2026-02-14T00:00:00Z",
-  "modified": "2026-02-19T22:16:44.062Z",
+  "modified": "2026-03-02T23:52:47.104Z",
   "renderer": {
     "type": "three",
     "version": "0.160.x"

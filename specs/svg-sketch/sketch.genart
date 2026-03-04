@@ -2,8 +2,8 @@
   "genart": "1.1",
   "id": "svg-concentric-rings",
   "title": "SVG Concentric Rings",
-  "created": "2026-02-14T00:00:00Z",
-  "modified": "2026-03-02T23:52:47.104Z",
+  "created": "2026-03-02T23:48:35.157Z",
+  "modified": "2026-03-03T18:39:28.768Z",
   "renderer": {
     "type": "svg"
   },
@@ -52,6 +52,5 @@
       "#ffffff"
     ]
   },
-  "snapshots": [],
   "algorithm": "function sketch(state) {\n  function generate() {\n    const w = state.canvas.width;\n    const h = state.canvas.height;\n    const cx = w / 2;\n    const cy = h / 2;\n    const maxR = Math.min(w, h) / 2 - 20;\n    const n = state.params.ringCount;\n    let circles = '';\n    for (let i = 0; i < n; i++) {\n      const r = maxR * ((i + 1) / n);\n      circles += `<circle cx=\"${cx}\" cy=\"${cy}\" r=\"${r}\" fill=\"none\" stroke=\"${state.colorPalette[1]}\" stroke-width=\"${state.params.strokeWidth}\" />`;\n    }\n    return `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${w}\" height=\"${h}\" viewBox=\"0 0 ${w} ${h}\"><rect width=\"${w}\" height=\"${h}\" fill=\"${state.colorPalette[0]}\" />${circles}</svg>`;\n  }\n  return { generate, initializeSystem: generate };\n}"
 }

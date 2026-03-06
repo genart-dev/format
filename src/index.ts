@@ -23,9 +23,12 @@ export type {
   DesignLayer,
   ThirdPartyNotice,
   CompositionLevel,
+  SketchLineage,
   SketchDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,
+  SeriesStage,
+  WorkspaceSeries,
   WorkspaceDefinition,
 } from "./types.js";
 

@@ -2,6 +2,8 @@ import type {
   WorkspaceDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,
+  WorkspaceSeries,
+  SeriesStage,
 } from "../types.js";
 
 // ---------------------------------------------------------------------------
@@ -87,6 +89,54 @@ function parseGroup(raw: unknown, index: number): WorkspaceGroup {
   };
 }
 
+const VALID_SERIES_STAGES: readonly SeriesStage[] = [
+  "studies", "drafts", "refinements", "finals",
+];
+
+function parseSeries(raw: unknown, index: number): WorkspaceSeries {
+  assertObject(raw, `series[${index}]`);
+  assertString(raw["id"], `series[${index}].id`);
+  assertString(raw["label"], `series[${index}].label`);
+  assertString(raw["narrative"], `series[${index}].narrative`);
+  assertString(raw["intent"], `series[${index}].intent`);
+  assertArray(raw["sketchFiles"], `series[${index}].sketchFiles`);
+
+  const sketchFiles = (raw["sketchFiles"] as unknown[]).map((f, i) => {
+    assertString(f, `series[${index}].sketchFiles[${i}]`);
+    return f;
+  });
+
+  let progression: string | undefined;
+  if (raw["progression"] !== undefined) {
+    assertString(raw["progression"], `series[${index}].progression`);
+    progression = raw["progression"] as string;
+  }
+
+  let stages: SeriesStage[] | undefined;
+  if (raw["stages"] !== undefined) {
+    assertArray(raw["stages"], `series[${index}].stages`);
+    stages = (raw["stages"] as unknown[]).map((s, i) => {
+      assertString(s, `series[${index}].stages[${i}]`);
+      if (!VALID_SERIES_STAGES.includes(s as SeriesStage)) {
+        throw new Error(
+          `series[${index}].stages[${i}] must be one of: ${VALID_SERIES_STAGES.join(", ")}. Got "${s}"`,
+        );
+      }
+      return s as SeriesStage;
+    });
+  }
+
+  return {
+    id: raw["id"] as string,
+    label: raw["label"] as string,
+    narrative: raw["narrative"] as string,
+    intent: raw["intent"] as string,
+    sketchFiles,
+    ...(progression !== undefined ? { progression } : {}),
+    ...(stages !== undefined ? { stages } : {}),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -148,6 +198,12 @@ export function parseWorkspace(json: unknown): WorkspaceDefinition {
     groups = (json["groups"] as unknown[]).map(parseGroup);
   }
 
+  let series: WorkspaceSeries[] | undefined;
+  if (json["series"] !== undefined) {
+    assertArray(json["series"], "series");
+    series = (json["series"] as unknown[]).map(parseSeries);
+  }
+
   return {
     "genart-workspace": json["genart-workspace"],
     id: json["id"],
@@ -161,6 +217,7 @@ export function parseWorkspace(json: unknown): WorkspaceDefinition {
     },
     sketches,
     ...(groups !== undefined ? { groups } : {}),
+    ...(series !== undefined ? { series } : {}),
   };
 }
 
@@ -180,6 +237,10 @@ export function serializeWorkspace(workspace: WorkspaceDefinition): string {
 
   if (workspace.groups !== undefined) {
     out["groups"] = workspace.groups;
+  }
+
+  if (workspace.series !== undefined) {
+    out["series"] = workspace.series;
   }
 
   return JSON.stringify(out, null, 2);

@@ -19,6 +19,7 @@ import type {
   LayerTransform,
   ThirdPartyNotice,
   CompositionLevel,
+  SketchLineage,
 } from "../types.js";
 import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
 
@@ -472,7 +473,7 @@ function parseLayers(value: unknown): readonly DesignLayer[] {
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -504,6 +505,31 @@ function parseOptionals(obj: Obj): Partial<
       );
     }
     out["compositionLevel"] = obj["compositionLevel"];
+  }
+  if (obj["lineage"] !== undefined) {
+    assertObject(obj["lineage"], "lineage");
+    const lin = obj["lineage"] as Obj;
+    const lineage: Record<string, unknown> = {};
+    if (lin["parentId"] !== undefined) {
+      assertString(lin["parentId"], "lineage.parentId");
+      lineage["parentId"] = lin["parentId"];
+    }
+    if (lin["parentTitle"] !== undefined) {
+      assertString(lin["parentTitle"], "lineage.parentTitle");
+      lineage["parentTitle"] = lin["parentTitle"];
+    }
+    if (lin["generation"] !== undefined) {
+      assertNumber(lin["generation"], "lineage.generation");
+      lineage["generation"] = lin["generation"];
+    }
+    if (lin["blendSources"] !== undefined) {
+      assertArray(lin["blendSources"], "lineage.blendSources");
+      lineage["blendSources"] = (lin["blendSources"] as unknown[]).map((s, i) => {
+        assertString(s, `lineage.blendSources[${i}]`);
+        return s;
+      });
+    }
+    out["lineage"] = lineage as SketchLineage;
   }
   if (obj["components"] !== undefined) {
     out["components"] = parseComponents(obj["components"]);
@@ -546,7 +572,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -677,6 +703,7 @@ export function serializeGenart(sketch: SketchDefinition): string {
 
   if (sketch.skills !== undefined) out["skills"] = sketch.skills;
   if (sketch.compositionLevel !== undefined) out["compositionLevel"] = sketch.compositionLevel;
+  if (sketch.lineage !== undefined) out["lineage"] = sketch.lineage;
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
     out["components"] = sketch.components;

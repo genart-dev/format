@@ -271,6 +271,22 @@ export interface DesignLayer {
 export type CompositionLevel = "study" | "sketch" | "developed" | "exhibition";
 
 // ---------------------------------------------------------------------------
+// Lineage
+// ---------------------------------------------------------------------------
+
+/** Lineage metadata tracking a sketch's origin and derivation history. */
+export interface SketchLineage {
+  /** ID of the parent sketch this was forked/promoted from. */
+  readonly parentId?: string;
+  /** Title of the parent sketch at the time of derivation. */
+  readonly parentTitle?: string;
+  /** Generation number (1 = original, 2 = first fork, etc.). */
+  readonly generation?: number;
+  /** IDs of sketches blended/merged to create this one. */
+  readonly blendSources?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -296,6 +312,8 @@ export interface SketchDefinition {
   readonly skills?: readonly string[];
   /** Composition complexity/effort level (study, sketch, developed, exhibition). */
   readonly compositionLevel?: CompositionLevel;
+  /** Lineage metadata tracking derivation history (parent, generation, blend sources). */
+  readonly lineage?: SketchLineage;
   /** Reusable function components available to the algorithm.
    *  Keyed by component name (bare identifier, e.g., "prng", "noise-2d").
    *  String values are semver ranges resolved from the component registry.
@@ -363,6 +381,31 @@ export interface WorkspaceGroup {
   readonly color?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Workspace Series
+// ---------------------------------------------------------------------------
+
+/** Stage in a series progression (studio workflow). */
+export type SeriesStage = "studies" | "drafts" | "refinements" | "finals";
+
+/** A curated series of sketches with narrative and intent. */
+export interface WorkspaceSeries {
+  /** Unique series identifier (kebab-case). */
+  readonly id: string;
+  /** Display label for the series. */
+  readonly label: string;
+  /** Prose narrative describing the artistic exploration. */
+  readonly narrative: string;
+  /** Short statement of artistic intent. */
+  readonly intent: string;
+  /** Series progression type (e.g. "linear", "branching", "iterative"). */
+  readonly progression?: string;
+  /** Ordered stages in the studio workflow. */
+  readonly stages?: readonly SeriesStage[];
+  /** File paths of sketches in this series (ordered). */
+  readonly sketchFiles: readonly string[];
+}
+
 /** Complete .genart-workspace file structure. */
 export interface WorkspaceDefinition {
   /** Format version (e.g. "1.0"). */
@@ -381,4 +424,6 @@ export interface WorkspaceDefinition {
   readonly sketches: readonly WorkspaceSketchRef[];
   /** Optional sketch groups. */
   readonly groups?: readonly WorkspaceGroup[];
+  /** Optional curated series. */
+  readonly series?: readonly WorkspaceSeries[];
 }

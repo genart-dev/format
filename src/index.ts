@@ -22,6 +22,7 @@ export type {
   LayerTransform,
   DesignLayer,
   ThirdPartyNotice,
+  CompositionLevel,
   SketchDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,

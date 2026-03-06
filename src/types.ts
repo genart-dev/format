@@ -264,6 +264,13 @@ export interface DesignLayer {
 }
 
 // ---------------------------------------------------------------------------
+// Composition Level
+// ---------------------------------------------------------------------------
+
+/** Composition complexity/effort level for a sketch. */
+export type CompositionLevel = "study" | "sketch" | "developed" | "exhibition";
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -287,6 +294,8 @@ export interface SketchDefinition {
   readonly model?: string;
   /** Design knowledge skills used. */
   readonly skills?: readonly string[];
+  /** Composition complexity/effort level (study, sketch, developed, exhibition). */
+  readonly compositionLevel?: CompositionLevel;
   /** Reusable function components available to the algorithm.
    *  Keyed by component name (bare identifier, e.g., "prng", "noise-2d").
    *  String values are semver ranges resolved from the component registry.

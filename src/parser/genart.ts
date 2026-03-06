@@ -18,6 +18,7 @@ import type {
   DesignLayer,
   LayerTransform,
   ThirdPartyNotice,
+  CompositionLevel,
 } from "../types.js";
 import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
 
@@ -34,6 +35,10 @@ const VALID_BLEND_MODES: readonly BlendMode[] = [
   "darken", "lighten", "color-dodge", "color-burn",
   "hard-light", "soft-light", "difference", "exclusion",
   "hue", "saturation", "color", "luminosity",
+];
+
+const VALID_COMPOSITION_LEVELS: readonly CompositionLevel[] = [
+  "study", "sketch", "developed", "exhibition",
 ];
 
 /** Default renderer for v1.0 files that omit the renderer field. */
@@ -467,7 +472,7 @@ function parseLayers(value: unknown): readonly DesignLayer[] {
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -490,6 +495,15 @@ function parseOptionals(obj: Obj): Partial<
       assertString(s, `skills[${i}]`);
       return s;
     });
+  }
+  if (obj["compositionLevel"] !== undefined) {
+    assertString(obj["compositionLevel"], "compositionLevel");
+    if (!VALID_COMPOSITION_LEVELS.includes(obj["compositionLevel"] as CompositionLevel)) {
+      throw new Error(
+        `"compositionLevel" must be one of: ${VALID_COMPOSITION_LEVELS.join(", ")}. Got "${obj["compositionLevel"]}"`,
+      );
+    }
+    out["compositionLevel"] = obj["compositionLevel"];
   }
   if (obj["components"] !== undefined) {
     out["components"] = parseComponents(obj["components"]);
@@ -532,7 +546,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -662,6 +676,7 @@ export function serializeGenart(sketch: SketchDefinition): string {
   if (sketch.model !== undefined) out["model"] = sketch.model;
 
   if (sketch.skills !== undefined) out["skills"] = sketch.skills;
+  if (sketch.compositionLevel !== undefined) out["compositionLevel"] = sketch.compositionLevel;
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
     out["components"] = sketch.components;

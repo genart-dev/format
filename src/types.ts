@@ -264,6 +264,43 @@ export interface DesignLayer {
 }
 
 // ---------------------------------------------------------------------------
+// References
+// ---------------------------------------------------------------------------
+
+/** Type of reference material. */
+export type ReferenceType = "image" | "artwork" | "photograph" | "texture" | "palette";
+
+/** A reference image or artwork attached to a series or sketch. */
+export interface Reference {
+  /** Unique reference identifier (kebab-case). */
+  readonly id: string;
+  /** Reference type. */
+  readonly type: ReferenceType;
+  /** Relative path to the reference image file in the workspace directory. */
+  readonly path: string;
+  /** Optional source attribution (artist, URL, collection). */
+  readonly source?: string;
+  /** Optional structured analysis of the reference (populated by analyze_reference). */
+  readonly analysis?: ReferenceAnalysis;
+}
+
+/** Structured analysis of a reference image. */
+export interface ReferenceAnalysis {
+  /** Compositional structure observations. */
+  readonly composition?: string;
+  /** Dominant colors as hex values. */
+  readonly palette?: readonly string[];
+  /** Visual rhythm and pattern observations. */
+  readonly rhythm?: string;
+  /** Mood and emotional qualities. */
+  readonly mood?: string;
+  /** Technique and medium observations. */
+  readonly technique?: string;
+  /** Key qualities worth studying or incorporating. */
+  readonly keyQualities?: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
 // Composition Level
 // ---------------------------------------------------------------------------
 
@@ -314,6 +351,8 @@ export interface SketchDefinition {
   readonly compositionLevel?: CompositionLevel;
   /** Lineage metadata tracking derivation history (parent, generation, blend sources). */
   readonly lineage?: SketchLineage;
+  /** Reference images/artworks attached to this sketch for inspiration. */
+  readonly references?: readonly Reference[];
   /** Reusable function components available to the algorithm.
    *  Keyed by component name (bare identifier, e.g., "prng", "noise-2d").
    *  String values are semver ranges resolved from the component registry.
@@ -404,6 +443,8 @@ export interface WorkspaceSeries {
   readonly stages?: readonly SeriesStage[];
   /** File paths of sketches in this series (ordered). */
   readonly sketchFiles: readonly string[];
+  /** Reference images/artworks attached to this series for inspiration. */
+  readonly references?: readonly Reference[];
 }
 
 /** Complete .genart-workspace file structure. */

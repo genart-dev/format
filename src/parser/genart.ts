@@ -473,7 +473,7 @@ function parseLayers(value: unknown): readonly DesignLayer[] {
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -569,10 +569,31 @@ function parseOptionals(obj: Obj): Partial<
     out["snapshots"] = (obj["snapshots"] as unknown[]).map(parseSnapshot);
   }
 
+  if (obj["dataChannels"] !== undefined) {
+    assertArray(obj["dataChannels"], "dataChannels");
+    out["dataChannels"] = (obj["dataChannels"] as unknown[]).map((ch, i) => {
+      assertObject(ch, `dataChannels[${i}]`);
+      const c = ch as Obj;
+      assertString(c["name"], `dataChannels[${i}].name`);
+      assertString(c["type"], `dataChannels[${i}].type`);
+      if (c["type"] !== "vector" && c["type"] !== "scalar") {
+        throw new Error(`dataChannels[${i}].type must be "vector" or "scalar". Got "${c["type"]}"`);
+      }
+      assertNumber(c["cols"], `dataChannels[${i}].cols`);
+      assertNumber(c["rows"], `dataChannels[${i}].rows`);
+      return {
+        name: c["name"] as string,
+        type: c["type"] as string,
+        cols: c["cols"] as number,
+        rows: c["rows"] as number,
+      };
+    });
+  }
+
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -704,6 +725,10 @@ export function serializeGenart(sketch: SketchDefinition): string {
   if (sketch.skills !== undefined) out["skills"] = sketch.skills;
   if (sketch.compositionLevel !== undefined) out["compositionLevel"] = sketch.compositionLevel;
   if (sketch.lineage !== undefined) out["lineage"] = sketch.lineage;
+
+  if (sketch.dataChannels !== undefined && sketch.dataChannels.length > 0) {
+    out["dataChannels"] = sketch.dataChannels;
+  }
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {
     out["components"] = sketch.components;

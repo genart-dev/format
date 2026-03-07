@@ -324,6 +324,25 @@ export interface SketchLineage {
 }
 
 // ---------------------------------------------------------------------------
+// Algorithm Data Channels (ADR 062)
+// ---------------------------------------------------------------------------
+
+/** Type of data in an algorithm-published channel. */
+export type DataChannelType = "vector" | "scalar";
+
+/** Algorithm data channel descriptor declared in sketch definition. */
+export interface AlgorithmDataChannel {
+  /** Channel name (e.g. "flowField", "valueMap", "mask"). */
+  readonly name: string;
+  /** Data type: "vector" = [dx, dy, magnitude] triples, "scalar" = single float per cell. */
+  readonly type: DataChannelType;
+  /** Grid width (columns). */
+  readonly cols: number;
+  /** Grid height (rows). */
+  readonly rows: number;
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -353,6 +372,8 @@ export interface SketchDefinition {
   readonly lineage?: SketchLineage;
   /** Reference images/artworks attached to this sketch for inspiration. */
   readonly references?: readonly Reference[];
+  /** Algorithm data channels this sketch publishes for design layer consumption (ADR 062). */
+  readonly dataChannels?: readonly AlgorithmDataChannel[];
   /** Reusable function components available to the algorithm.
    *  Keyed by component name (bare identifier, e.g., "prng", "noise-2d").
    *  String values are semver ranges resolved from the component registry.

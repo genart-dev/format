@@ -27,6 +27,8 @@ export type {
   ReferenceAnalysis,
   CompositionLevel,
   SketchLineage,
+  DataChannelType,
+  AlgorithmDataChannel,
   SketchDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,

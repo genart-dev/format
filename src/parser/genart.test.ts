@@ -485,3 +485,74 @@ describe("parseGenart — thirdParty field", () => {
     expect(() => parseGenart(invalid)).toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// dataChannels field (ADR 062)
+// ---------------------------------------------------------------------------
+
+const MINIMAL_WITH_DATA_CHANNELS = {
+  genart: "1.3",
+  id: "dc-test",
+  title: "Data Channels Test",
+  created: "2026-03-06T00:00:00.000Z",
+  modified: "2026-03-06T00:00:00.000Z",
+  renderer: { type: "canvas2d" },
+  canvas: { width: 800, height: 600 },
+  parameters: [],
+  colors: [],
+  state: { seed: 1, params: {}, colorPalette: [] },
+  algorithm: "",
+  dataChannels: [
+    { name: "flowField", type: "vector", cols: 40, rows: 40 },
+    { name: "valueMap", type: "scalar", cols: 200, rows: 200 },
+  ],
+};
+
+describe("parseGenart — dataChannels field", () => {
+  it("parses dataChannels", () => {
+    const result = parseGenart(MINIMAL_WITH_DATA_CHANNELS);
+    expect(result.dataChannels).toHaveLength(2);
+    const flow = result.dataChannels![0]!;
+    expect(flow.name).toBe("flowField");
+    expect(flow.type).toBe("vector");
+    expect(flow.cols).toBe(40);
+    expect(flow.rows).toBe(40);
+    const value = result.dataChannels![1]!;
+    expect(value.name).toBe("valueMap");
+    expect(value.type).toBe("scalar");
+    expect(value.cols).toBe(200);
+    expect(value.rows).toBe(200);
+  });
+
+  it("parses without dataChannels (backward compat)", () => {
+    const result = parseGenart(loadFixture("minimal.genart"));
+    expect(result.dataChannels).toBeUndefined();
+  });
+
+  it("round-trips dataChannels through serialize/parse", () => {
+    const parsed = parseGenart(MINIMAL_WITH_DATA_CHANNELS);
+    const reparsed = parseGenart(JSON.parse(serializeGenart(parsed)));
+    expect(reparsed.dataChannels).toEqual(parsed.dataChannels);
+  });
+
+  it("omits dataChannels from output when absent", () => {
+    const parsed = parseGenart(loadFixture("minimal.genart"));
+    expect(serializeGenart(parsed)).not.toContain('"dataChannels"');
+  });
+
+  it("rejects invalid channel type", () => {
+    const invalid = {
+      ...MINIMAL_WITH_DATA_CHANNELS,
+      dataChannels: [{ name: "flow", type: "invalid", cols: 10, rows: 10 }],
+    };
+    expect(() => parseGenart(invalid)).toThrow(/must be "vector" or "scalar"/);
+  });
+
+  it("rejects channel missing required fields", () => {
+    const invalid = {
+      ...MINIMAL_WITH_DATA_CHANNELS,
+      dataChannels: [{ name: "flow", type: "vector" }], // missing cols and rows
+    };
+    expect(() => parseGenart(invalid)).toThrow();
+  });
+});

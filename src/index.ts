@@ -32,6 +32,9 @@ export type {
   DataSourceType,
   DataSourceOrigin,
   SketchDataSource,
+  DataChannelContentType,
+  GenartDataChannel,
+  GenartDataFile,
   SketchDefinition,
   WorkspaceSketchRef,
   WorkspaceGroup,
@@ -51,4 +54,6 @@ export {
   serializeWorkspace,
   convertLegacySketch,
   extractLegacyInfo,
+  parseGenartData,
+  serializeGenartData,
 } from "./parser/index.js";

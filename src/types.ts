@@ -378,6 +378,49 @@ export interface SketchDataSource {
 }
 
 // ---------------------------------------------------------------------------
+// .genart-data file format (ADR 066)
+// ---------------------------------------------------------------------------
+
+/** Content type for a .genart-data file channel. */
+export type DataChannelContentType = "scalar" | "vector" | "json";
+
+/**
+ * A single data channel within a .genart-data file.
+ * For typed arrays, `data` is a base64-encoded Float32Array.
+ * For JSON, `data` is the JSON value directly.
+ */
+export interface GenartDataChannel {
+  /** Channel content type. */
+  readonly type: DataChannelContentType;
+  /** Channel data — base64 string for scalar/vector, JSON value for json. */
+  readonly data: string | unknown;
+}
+
+/**
+ * A .genart-data file — reusable data payload for sharing between sketches.
+ *
+ * Can contain either:
+ * - Grid-based data with `cols`/`rows` and named `channels` (flow fields, value maps)
+ * - A simple JSON `value` payload (palettes, configs)
+ */
+export interface GenartDataFile {
+  /** Format identifier and version (always "1.0"). */
+  readonly "genart-data": string;
+  /** Data type hint (e.g. "flow-field", "value-map", "config", "palette"). */
+  readonly type: string;
+  /** Optional human-readable description. */
+  readonly description?: string;
+  /** Grid columns (for grid-based data). */
+  readonly cols?: number;
+  /** Grid rows (for grid-based data). */
+  readonly rows?: number;
+  /** Named data channels (for grid-based data). */
+  readonly channels?: Readonly<Record<string, GenartDataChannel>>;
+  /** Simple JSON value payload (for non-grid data). */
+  readonly value?: unknown;
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 

@@ -4,6 +4,9 @@ import type {
   SketchComponentDef,
   SketchSymbolValue,
   SketchSymbolDef,
+  SketchDataSource,
+  DataSourceType,
+  DataSourceOrigin,
   SymbolPath,
   RendererType,
   RendererSpec,
@@ -40,6 +43,14 @@ const VALID_BLEND_MODES: readonly BlendMode[] = [
 
 const VALID_COMPOSITION_LEVELS: readonly CompositionLevel[] = [
   "study", "sketch", "developed", "exhibition",
+];
+
+const VALID_DATA_SOURCE_TYPES: readonly DataSourceType[] = [
+  "flow-field", "value-map", "palette-map", "custom",
+];
+
+const VALID_DATA_SOURCE_ORIGINS: readonly DataSourceOrigin[] = [
+  "component", "file", "inline",
 ];
 
 /** Default renderer for v1.0 files that omit the renderer field. */
@@ -467,13 +478,82 @@ function parseLayers(value: unknown): readonly DesignLayer[] {
 }
 
 // ---------------------------------------------------------------------------
+// Data source parsers (ADR 066)
+// ---------------------------------------------------------------------------
+
+function parseDataSource(raw: unknown, name: string): SketchDataSource {
+  assertObject(raw, `data["${name}"]`);
+  const obj = raw as Obj;
+
+  assertString(obj["type"], `data["${name}"].type`);
+  if (!VALID_DATA_SOURCE_TYPES.includes(obj["type"] as DataSourceType)) {
+    throw new Error(
+      `data["${name}"].type must be one of: ${VALID_DATA_SOURCE_TYPES.join(", ")}. Got "${obj["type"]}"`,
+    );
+  }
+
+  assertString(obj["source"], `data["${name}"].source`);
+  if (!VALID_DATA_SOURCE_ORIGINS.includes(obj["source"] as DataSourceOrigin)) {
+    throw new Error(
+      `data["${name}"].source must be one of: ${VALID_DATA_SOURCE_ORIGINS.join(", ")}. Got "${obj["source"]}"`,
+    );
+  }
+
+  const result: Record<string, unknown> = {
+    type: obj["type"],
+    source: obj["source"],
+  };
+
+  if (obj["component"] !== undefined) {
+    assertString(obj["component"], `data["${name}"].component`);
+    result["component"] = obj["component"];
+  }
+  if (obj["config"] !== undefined) {
+    assertObject(obj["config"], `data["${name}"].config`);
+    result["config"] = obj["config"];
+  }
+  if (obj["path"] !== undefined) {
+    assertString(obj["path"], `data["${name}"].path`);
+    result["path"] = obj["path"];
+  }
+  if (obj["value"] !== undefined) {
+    result["value"] = obj["value"];
+  }
+
+  // Validate required fields per source type
+  const source = obj["source"] as string;
+  if (source === "component" && result["component"] === undefined) {
+    throw new Error(`data["${name}"] with source="component" must have a "component" field`);
+  }
+  if (source === "file" && result["path"] === undefined) {
+    throw new Error(`data["${name}"] with source="file" must have a "path" field`);
+  }
+
+  return result as unknown as SketchDataSource;
+}
+
+function parseDataSources(
+  raw: unknown,
+): Readonly<Record<string, SketchDataSource>> {
+  assertObject(raw, "data");
+  const result: Record<string, SketchDataSource> = {};
+  for (const [key, value] of Object.entries(raw as Obj)) {
+    if (key.length === 0) {
+      throw new Error("data key must not be empty");
+    }
+    result[key] = parseDataSource(value, key);
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Optionals helper — parse optional fields into a partial
 // ---------------------------------------------------------------------------
 
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -530,6 +610,9 @@ function parseOptionals(obj: Obj): Partial<
       });
     }
     out["lineage"] = lineage as SketchLineage;
+  }
+  if (obj["data"] !== undefined) {
+    out["data"] = parseDataSources(obj["data"]);
   }
   if (obj["components"] !== undefined) {
     out["components"] = parseComponents(obj["components"]);
@@ -593,7 +676,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -728,6 +811,10 @@ export function serializeGenart(sketch: SketchDefinition): string {
 
   if (sketch.dataChannels !== undefined && sketch.dataChannels.length > 0) {
     out["dataChannels"] = sketch.dataChannels;
+  }
+
+  if (sketch.data !== undefined && Object.keys(sketch.data).length > 0) {
+    out["data"] = sketch.data;
   }
 
   if (sketch.components !== undefined && Object.keys(sketch.components).length > 0) {

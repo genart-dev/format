@@ -556,3 +556,150 @@ describe("parseGenart — dataChannels field", () => {
     expect(() => parseGenart(invalid)).toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Data sources (ADR 066)
+// ---------------------------------------------------------------------------
+
+const MINIMAL_BASE = {
+  genart: "1.3",
+  id: "data-test",
+  title: "Data Sources Test",
+  created: "2026-03-08T00:00:00.000Z",
+  modified: "2026-03-08T00:00:00.000Z",
+  renderer: { type: "canvas2d" },
+  canvas: { width: 800, height: 600 },
+  parameters: [],
+  colors: [],
+  state: { seed: 1, params: {}, colorPalette: [] },
+  algorithm: "",
+};
+
+describe("parseGenart — data sources (ADR 066)", () => {
+  it("parses component data source", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: {
+        scene: {
+          type: "flow-field",
+          source: "component",
+          component: "curl-flow-field",
+          config: { gridSize: 200, turbulence: 0.6 },
+        },
+      },
+    };
+    const result = parseGenart(input);
+    expect(result.data).toBeDefined();
+    const scene = result.data!["scene"]!;
+    expect(scene.type).toBe("flow-field");
+    expect(scene.source).toBe("component");
+    expect(scene.component).toBe("curl-flow-field");
+    expect(scene.config).toEqual({ gridSize: 200, turbulence: 0.6 });
+  });
+
+  it("parses file data source", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: {
+        heightmap: {
+          type: "custom",
+          source: "file",
+          path: "./shared/terrain.genart-data",
+        },
+      },
+    };
+    const result = parseGenart(input);
+    const hm = result.data!["heightmap"]!;
+    expect(hm.type).toBe("custom");
+    expect(hm.source).toBe("file");
+    expect(hm.path).toBe("./shared/terrain.genart-data");
+  });
+
+  it("parses inline data source", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: {
+        palette: {
+          type: "palette-map",
+          source: "inline",
+          value: { regions: [{ y: [0, 0.5], colors: ["#f00", "#0f0"] }] },
+        },
+      },
+    };
+    const result = parseGenart(input);
+    const pal = result.data!["palette"]!;
+    expect(pal.type).toBe("palette-map");
+    expect(pal.source).toBe("inline");
+    expect(pal.value).toEqual({ regions: [{ y: [0, 0.5], colors: ["#f00", "#0f0"] }] });
+  });
+
+  it("round-trips data sources through serialize/parse", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: {
+        scene: {
+          type: "flow-field" as const,
+          source: "component" as const,
+          component: "curl-flow-field",
+          config: { gridSize: 200 },
+        },
+        palette: {
+          type: "palette-map" as const,
+          source: "inline" as const,
+          value: [1, 2, 3],
+        },
+      },
+    };
+    const parsed = parseGenart(input);
+    const serialized = serializeGenart(parsed);
+    const reparsed = parseGenart(JSON.parse(serialized));
+    expect(reparsed.data).toEqual(parsed.data);
+  });
+
+  it("omits data field when absent", () => {
+    const result = parseGenart(MINIMAL_BASE);
+    expect(result.data).toBeUndefined();
+    const serialized = serializeGenart(result);
+    expect(serialized).not.toContain('"data"');
+  });
+
+  it("rejects invalid data source type", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: { x: { type: "invalid", source: "inline" } },
+    };
+    expect(() => parseGenart(input)).toThrow(/must be one of/);
+  });
+
+  it("rejects invalid data source origin", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: { x: { type: "custom", source: "magic" } },
+    };
+    expect(() => parseGenart(input)).toThrow(/must be one of/);
+  });
+
+  it("rejects component source without component field", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: { x: { type: "flow-field", source: "component" } },
+    };
+    expect(() => parseGenart(input)).toThrow(/must have a "component" field/);
+  });
+
+  it("rejects file source without path field", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: { x: { type: "custom", source: "file" } },
+    };
+    expect(() => parseGenart(input)).toThrow(/must have a "path" field/);
+  });
+
+  it("rejects empty data key", () => {
+    const input = {
+      ...MINIMAL_BASE,
+      data: { "": { type: "custom", source: "inline", value: 1 } },
+    };
+    expect(() => parseGenart(input)).toThrow(/key must not be empty/);
+  });
+});

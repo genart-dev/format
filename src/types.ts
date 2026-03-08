@@ -343,6 +343,41 @@ export interface AlgorithmDataChannel {
 }
 
 // ---------------------------------------------------------------------------
+// Sketch Data Sources (ADR 066)
+// ---------------------------------------------------------------------------
+
+/** Data source type indicating what kind of data is produced. */
+export type DataSourceType = "flow-field" | "value-map" | "palette-map" | "custom";
+
+/** Where the data comes from. */
+export type DataSourceOrigin = "component" | "file" | "inline";
+
+/**
+ * A data source that provides pre-configured data to the algorithm.
+ *
+ * Three source modes:
+ * - `component`: runtime resolves a component and calls its factory with `config`
+ * - `file`: loads a `.genart-data` file from `path`
+ * - `inline`: uses `value` directly (JSON-serializable)
+ *
+ * Resolved data is injected into the algorithm as `state.data.<key>`.
+ */
+export interface SketchDataSource {
+  /** What kind of data this source produces. */
+  readonly type: DataSourceType;
+  /** Where the data comes from. */
+  readonly source: DataSourceOrigin;
+  /** Component name for source='component'. */
+  readonly component?: string;
+  /** Configuration passed to the component factory for source='component'. */
+  readonly config?: Readonly<Record<string, unknown>>;
+  /** Relative path to a .genart-data file for source='file'. */
+  readonly path?: string;
+  /** Inline data for source='inline' (JSON-serializable). */
+  readonly value?: unknown;
+}
+
+// ---------------------------------------------------------------------------
 // Sketch Definition (.genart file)
 // ---------------------------------------------------------------------------
 
@@ -384,6 +419,10 @@ export interface SketchDefinition {
    *  String values are registry ID references (unresolved).
    *  Object values are resolved definitions with SVG paths. */
   readonly symbols?: Readonly<Record<string, SketchSymbolValue>>;
+  /** Data sources providing pre-configured data to the algorithm (ADR 066).
+   *  Keyed by name (e.g., "scene", "heightmap", "palette").
+   *  Resolved before algorithm execution and injected via `state.data`. */
+  readonly data?: Readonly<Record<string, SketchDataSource>>;
   /** Design layers composited on top of the generative sketch output.
    *  Ordered bottom-to-top. Empty or absent means pure generative sketch. */
   readonly layers?: readonly DesignLayer[];

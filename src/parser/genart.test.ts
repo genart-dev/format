@@ -545,7 +545,7 @@ describe("parseGenart — dataChannels field", () => {
       ...MINIMAL_WITH_DATA_CHANNELS,
       dataChannels: [{ name: "flow", type: "invalid", cols: 10, rows: 10 }],
     };
-    expect(() => parseGenart(invalid)).toThrow(/must be "vector" or "scalar"/);
+    expect(() => parseGenart(invalid)).toThrow(/must be "vector", "scalar", or "path"/);
   });
 
   it("rejects channel missing required fields", () => {
@@ -554,6 +554,38 @@ describe("parseGenart — dataChannels field", () => {
       dataChannels: [{ name: "flow", type: "vector" }], // missing cols and rows
     };
     expect(() => parseGenart(invalid)).toThrow();
+  });
+
+  it("parses path channel type without cols/rows (ADR 072)", () => {
+    const withPath = {
+      ...MINIMAL_WITH_DATA_CHANNELS,
+      dataChannels: [
+        { name: "strokePaths", type: "path" },
+        { name: "flowField", type: "vector", cols: 20, rows: 20 },
+      ],
+    };
+    const result = parseGenart(withPath);
+    expect(result.dataChannels).toHaveLength(2);
+    const paths = result.dataChannels![0]!;
+    expect(paths.name).toBe("strokePaths");
+    expect(paths.type).toBe("path");
+    expect(paths.cols).toBeUndefined();
+    expect(paths.rows).toBeUndefined();
+    const flow = result.dataChannels![1]!;
+    expect(flow.type).toBe("vector");
+    expect(flow.cols).toBe(20);
+  });
+
+  it("round-trips path channel through serialize/parse", () => {
+    const withPath = {
+      ...MINIMAL_WITH_DATA_CHANNELS,
+      dataChannels: [{ name: "strokePaths", type: "path" }],
+    };
+    const parsed = parseGenart(withPath);
+    const json = serializeGenart(parsed);
+    const reparsed = parseGenart(JSON.parse(json));
+    expect(reparsed.dataChannels![0]!.type).toBe("path");
+    expect(reparsed.dataChannels![0]!.cols).toBeUndefined();
   });
 });
 

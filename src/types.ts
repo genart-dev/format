@@ -328,18 +328,49 @@ export interface SketchLineage {
 // ---------------------------------------------------------------------------
 
 /** Type of data in an algorithm-published channel. */
-export type DataChannelType = "vector" | "scalar";
+export type DataChannelType = "vector" | "scalar" | "path";
 
 /** Algorithm data channel descriptor declared in sketch definition. */
 export interface AlgorithmDataChannel {
-  /** Channel name (e.g. "flowField", "valueMap", "mask"). */
+  /** Channel name (e.g. "flowField", "valueMap", "mask", "strokePaths"). */
   readonly name: string;
-  /** Data type: "vector" = [dx, dy, magnitude] triples, "scalar" = single float per cell. */
+  /** Data type: "vector" = [dx, dy, magnitude] triples, "scalar" = single float per cell, "path" = stroke path array. */
   readonly type: DataChannelType;
-  /** Grid width (columns). */
-  readonly cols: number;
-  /** Grid height (rows). */
-  readonly rows: number;
+  /** Grid width (columns). Required for "vector" and "scalar", ignored for "path". */
+  readonly cols?: number;
+  /** Grid height (rows). Required for "vector" and "scalar", ignored for "path". */
+  readonly rows?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Stroke Path Data (ADR 072)
+// ---------------------------------------------------------------------------
+
+/** A single point on an algorithm-generated stroke path. */
+export interface AlgorithmStrokePathPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** A stroke path published by an algorithm via window.__genart_data.strokePaths. */
+export interface AlgorithmStrokePath {
+  /** Polyline points in canvas coordinates. */
+  readonly points: readonly AlgorithmStrokePathPoint[];
+  /** Per-point pressure values [0,1]. Defaults to 1.0 for all points if omitted. */
+  readonly pressure?: readonly number[];
+  /** Base width in pixels. */
+  readonly width?: number;
+  /** Semantic depth (0 = root/trunk, higher = leaf/tip). */
+  readonly depth?: number;
+  /** Grouping key for filtering paths. */
+  readonly group?: string;
+  /** Arbitrary scalar metadata. */
+  readonly meta?: Readonly<Record<string, number>>;
+}
+
+/** Serialized stroke path data in a sketch definition. */
+export interface StrokePathData {
+  readonly paths: readonly AlgorithmStrokePath[];
 }
 
 // ---------------------------------------------------------------------------

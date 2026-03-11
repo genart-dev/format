@@ -659,17 +659,24 @@ function parseOptionals(obj: Obj): Partial<
       const c = ch as Obj;
       assertString(c["name"], `dataChannels[${i}].name`);
       assertString(c["type"], `dataChannels[${i}].type`);
-      if (c["type"] !== "vector" && c["type"] !== "scalar") {
-        throw new Error(`dataChannels[${i}].type must be "vector" or "scalar". Got "${c["type"]}"`);
+      if (c["type"] !== "vector" && c["type"] !== "scalar" && c["type"] !== "path") {
+        throw new Error(`dataChannels[${i}].type must be "vector", "scalar", or "path". Got "${c["type"]}"`);
       }
-      assertNumber(c["cols"], `dataChannels[${i}].cols`);
-      assertNumber(c["rows"], `dataChannels[${i}].rows`);
-      return {
+      const channel: Record<string, unknown> = {
         name: c["name"] as string,
         type: c["type"] as string,
-        cols: c["cols"] as number,
-        rows: c["rows"] as number,
       };
+      // cols/rows required for vector/scalar, optional for path
+      if (c["type"] === "path") {
+        if (c["cols"] !== undefined) channel["cols"] = c["cols"] as number;
+        if (c["rows"] !== undefined) channel["rows"] = c["rows"] as number;
+      } else {
+        assertNumber(c["cols"], `dataChannels[${i}].cols`);
+        assertNumber(c["rows"], `dataChannels[${i}].rows`);
+        channel["cols"] = c["cols"] as number;
+        channel["rows"] = c["rows"] as number;
+      }
+      return channel;
     });
   }
 

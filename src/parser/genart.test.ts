@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseGenart, serializeGenart } from "./genart.js";
@@ -733,5 +733,31 @@ describe("parseGenart — data sources (ADR 066)", () => {
       data: { "": { type: "custom", source: "inline", value: 1 } },
     };
     expect(() => parseGenart(input)).toThrow(/key must not be empty/);
+  });
+});
+
+describe("parseGenart — unknown field warnings", () => {
+  it("warns on unknown top-level fields", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const input = {
+      ...MINIMAL_BASE,
+      unknownField: "hello",
+      anotherExtra: 42,
+    };
+    parseGenart(input);
+    expect(spy).toHaveBeenCalledWith(
+      '[genart] Unknown top-level field "unknownField" will be ignored',
+    );
+    expect(spy).toHaveBeenCalledWith(
+      '[genart] Unknown top-level field "anotherExtra" will be ignored',
+    );
+    spy.mockRestore();
+  });
+
+  it("does not warn on known fields", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    parseGenart(loadFixture("minimal.genart"));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

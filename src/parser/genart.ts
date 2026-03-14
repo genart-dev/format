@@ -777,6 +777,20 @@ export function parseGenart(json: unknown): SketchDefinition {
   }
   assertString(json["algorithm"], "algorithm");
 
+  // Warn on unknown top-level fields (helps diagnose format version mismatches)
+  const KNOWN_FIELDS = new Set([
+    "genart", "id", "title", "subtitle", "created", "modified",
+    "agent", "model", "skills", "compositionLevel", "lineage",
+    "dataChannels", "data", "components", "symbols", "thirdParty",
+    "layers", "philosophy", "renderer", "canvas", "tabs",
+    "parameters", "colors", "themes", "state", "snapshots", "algorithm",
+  ]);
+  for (const key of Object.keys(json)) {
+    if (!KNOWN_FIELDS.has(key)) {
+      console.warn(`[genart] Unknown top-level field "${key}" will be ignored`);
+    }
+  }
+
   return {
     genart: json["genart"],
     id: json["id"],

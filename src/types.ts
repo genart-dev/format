@@ -28,7 +28,7 @@ export interface ThirdPartyNotice {
 // ---------------------------------------------------------------------------
 
 /** Supported rendering engine types. */
-export type RendererType = "p5" | "three" | "glsl" | "canvas2d" | "svg";
+export type RendererType = "p5" | "three" | "glsl" | "canvas2d" | "svg" | "genart";
 
 /** Renderer specification stored in a .genart file. */
 export interface RendererSpec {

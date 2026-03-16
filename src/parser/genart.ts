@@ -33,6 +33,7 @@ const VALID_RENDERER_TYPES: readonly RendererType[] = [
   "glsl",
   "canvas2d",
   "svg",
+  "genart",
 ];
 
 const VALID_BLEND_MODES: readonly BlendMode[] = [

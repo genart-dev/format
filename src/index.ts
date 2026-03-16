@@ -20,6 +20,7 @@ export type {
   SketchSymbolDef,
   BlendMode,
   LayerTransform,
+  MaskMode,
   DesignLayer,
   ThirdPartyNotice,
   ReferenceType,

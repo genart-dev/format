@@ -18,6 +18,7 @@ import type {
   SketchState,
   Snapshot,
   BlendMode,
+  MaskMode,
   DesignLayer,
   LayerTransform,
   ThirdPartyNotice,
@@ -40,6 +41,8 @@ const VALID_BLEND_MODES: readonly BlendMode[] = [
   "hard-light", "soft-light", "difference", "exclusion",
   "hue", "saturation", "color", "luminosity",
 ];
+
+const VALID_MASK_MODES: readonly MaskMode[] = ["alpha", "inverted-alpha", "luminosity"];
 
 const VALID_COMPOSITION_LEVELS: readonly CompositionLevel[] = [
   "study", "sketch", "developed", "exhibition",
@@ -445,6 +448,26 @@ function parseDesignLayer(value: unknown, path: string): DesignLayer {
 
   assertObject(obj["properties"], `${path}.properties`);
 
+  // Optional mask fields
+  let maskLayerId: string | undefined;
+  let maskMode: MaskMode | undefined;
+  if (obj["maskLayerId"] !== undefined) {
+    assertString(obj["maskLayerId"], `${path}.maskLayerId`);
+    maskLayerId = obj["maskLayerId"] as string;
+    // Default maskMode to 'alpha' when maskLayerId is present but maskMode is absent
+    if (obj["maskMode"] === undefined) {
+      maskMode = "alpha";
+    } else {
+      assertString(obj["maskMode"], `${path}.maskMode`);
+      if (!VALID_MASK_MODES.includes(obj["maskMode"] as MaskMode)) {
+        throw new Error(
+          `"${path}.maskMode" must be one of ${VALID_MASK_MODES.join(", ")}, got "${obj["maskMode"]}"`,
+        );
+      }
+      maskMode = obj["maskMode"] as MaskMode;
+    }
+  }
+
   const layer: DesignLayer = {
     id: obj["id"] as string,
     type: obj["type"] as string,
@@ -455,6 +478,7 @@ function parseDesignLayer(value: unknown, path: string): DesignLayer {
     blendMode: obj["blendMode"] as BlendMode,
     transform,
     properties: obj["properties"] as Readonly<Record<string, unknown>>,
+    ...(maskLayerId !== undefined && { maskLayerId, maskMode }),
   };
 
   if (obj["children"] !== undefined) {

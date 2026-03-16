@@ -249,6 +249,15 @@ export interface LayerTransform {
   readonly anchorY: number;
 }
 
+/**
+ * How a mask layer is applied to a masked layer.
+ *
+ * - `alpha` — show where mask is opaque (e.g. fog fills terrain body)
+ * - `inverted-alpha` — show where mask is transparent (e.g. mist above horizon)
+ * - `luminosity` — modulate masked layer alpha by mask brightness
+ */
+export type MaskMode = "alpha" | "inverted-alpha" | "luminosity";
+
 /** A serialized design layer in the .genart file. */
 export interface DesignLayer {
   readonly id: string;
@@ -261,6 +270,10 @@ export interface DesignLayer {
   readonly transform: LayerTransform;
   readonly properties: Readonly<Record<string, unknown>>;
   readonly children?: readonly DesignLayer[];
+  /** ID of the layer to use as a mask source. Defaults to `alpha` mode if maskMode is absent. */
+  readonly maskLayerId?: string;
+  /** How to apply the mask. Defaults to `'alpha'` when maskLayerId is set. */
+  readonly maskMode?: MaskMode;
 }
 
 // ---------------------------------------------------------------------------

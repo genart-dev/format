@@ -194,6 +194,33 @@ describe("parseGenart — valid fixtures", () => {
     const result = parseGenart(loadFixture("minimal.genart"));
     expect(result.layers).toBeUndefined();
   });
+
+  it("parses layer with maskLayerId + maskMode (roundtrip)", () => {
+    const fixture = loadFixture("layers-basic.genart") as Record<string, unknown>;
+    const layers = fixture["layers"] as unknown[];
+    (layers[1] as Record<string, unknown>)["maskLayerId"] = "layer-text-01";
+    (layers[1] as Record<string, unknown>)["maskMode"] = "inverted-alpha";
+    const result = parseGenart(fixture);
+    expect(result.layers![1]!.maskLayerId).toBe("layer-text-01");
+    expect(result.layers![1]!.maskMode).toBe("inverted-alpha");
+  });
+
+  it("defaults maskMode to 'alpha' when maskLayerId is set but maskMode is absent", () => {
+    const fixture = loadFixture("layers-basic.genart") as Record<string, unknown>;
+    const layers = fixture["layers"] as unknown[];
+    (layers[0] as Record<string, unknown>)["maskLayerId"] = "layer-grain-01";
+    const result = parseGenart(fixture);
+    expect(result.layers![0]!.maskLayerId).toBe("layer-grain-01");
+    expect(result.layers![0]!.maskMode).toBe("alpha");
+  });
+
+  it("parses layers without mask fields (no regression)", () => {
+    const result = parseGenart(loadFixture("layers-basic.genart"));
+    expect(result.layers![0]!.maskLayerId).toBeUndefined();
+    expect(result.layers![0]!.maskMode).toBeUndefined();
+    expect(result.layers![1]!.maskLayerId).toBeUndefined();
+    expect(result.layers![1]!.maskMode).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -253,6 +280,14 @@ describe("parseGenart — invalid fixtures", () => {
     expect(() =>
       parseGenart(loadInvalid("invalid-layer-bad-blend.genart")),
     ).toThrow(/must be a valid blend mode, got "bogus"/);
+  });
+
+  it("rejects layer with invalid maskMode", () => {
+    const fixture = loadFixture("layers-basic.genart") as Record<string, unknown>;
+    const layers = fixture["layers"] as unknown[];
+    (layers[0] as Record<string, unknown>)["maskLayerId"] = "layer-grain-01";
+    (layers[0] as Record<string, unknown>)["maskMode"] = "bogus-mode";
+    expect(() => parseGenart(fixture)).toThrow(/maskMode.*must be one of/);
   });
 });
 

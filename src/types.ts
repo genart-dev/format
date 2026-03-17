@@ -1,4 +1,42 @@
 // ---------------------------------------------------------------------------
+// External Library Dependencies (ADR 086)
+// ---------------------------------------------------------------------------
+
+/**
+ * An external JavaScript library loaded as a CDN `<script>` tag before the
+ * algorithm. Enables natural-media rendering (p5.brush), physics (matter.js),
+ * audio-reactivity (Tone.js), etc.
+ *
+ * Use `LIBRARY_PRESETS` from `library-presets.ts` to look up curated entries.
+ * Custom entries can be constructed directly.
+ */
+export interface LibraryDependency {
+  /** Library name used as the preset key, e.g. "p5.brush". */
+  readonly name: string;
+  /** Semver string for the specific version loaded, e.g. "2.0.3-beta". */
+  readonly version: string;
+  /** Full CDN URL for the `<script src>` tag. */
+  readonly cdnUrl: string;
+  /** JavaScript global name exposed by the library, e.g. "brush", "Tone", "Matter". */
+  readonly globalName: string;
+  /** Renderer types this library is compatible with, e.g. ["p5"]. */
+  readonly renderers: readonly RendererType[];
+  /** SPDX license identifier or short description, e.g. "MIT". */
+  readonly license: string;
+  /** Copyright line as it appears in the upstream LICENSE file. */
+  readonly copyright: string;
+  /** Canonical URL for the upstream project. */
+  readonly url: string;
+  /**
+   * Renderer runtime version required by this library (e.g. "2.x").
+   * When set, the sketch's `renderer.version` is assigned this value at
+   * creation time and the adapter selects the matching CDN URL.
+   * Existing sketches without this field continue using the default runtime.
+   */
+  readonly rendererVersionRequirement?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Third-party attribution
 // ---------------------------------------------------------------------------
 
@@ -517,6 +555,8 @@ export interface SketchDefinition {
   readonly renderer: RendererSpec;
   /** Canvas dimensions. */
   readonly canvas: CanvasSpec;
+  /** External library dependencies loaded as CDN script tags before the algorithm (ADR 086). */
+  readonly libraries?: readonly LibraryDependency[];
   /** Third-party attribution notices for embedded content (icons, fonts, etc.). */
   readonly thirdParty?: readonly ThirdPartyNotice[];
   /** Markdown philosophy / design intent documentation. */

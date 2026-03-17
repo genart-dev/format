@@ -1,5 +1,6 @@
 // Types
 export type {
+  LibraryDependency,
   RendererType,
   RendererSpec,
   CanvasSpec,
@@ -49,6 +50,14 @@ export type {
 
 // Canvas presets
 export { CANVAS_PRESETS, resolvePreset } from "./presets.js";
+
+// Library presets
+export {
+  LIBRARY_PRESETS,
+  resolveLibrary,
+  resolveLibraries,
+  listLibraryPresets,
+} from "./library-presets.js";
 
 // Parsers
 export {

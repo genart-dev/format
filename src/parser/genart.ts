@@ -24,6 +24,7 @@ import type {
   ThirdPartyNotice,
   CompositionLevel,
   SketchLineage,
+  LibraryDependency,
 } from "../types.js";
 import { resolvePreset, CANVAS_PRESETS } from "../presets.js";
 
@@ -578,7 +579,7 @@ function parseDataSources(
 function parseOptionals(obj: Obj): Partial<
   Pick<
     SketchDefinition,
-    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+    "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "libraries" | "philosophy" | "tabs" | "themes" | "snapshots"
   >
 > {
   const out: Record<string, unknown> = {};
@@ -660,6 +661,36 @@ function parseOptionals(obj: Obj): Partial<
   if (obj["layers"] !== undefined) {
     out["layers"] = parseLayers(obj["layers"]);
   }
+  if (obj["libraries"] !== undefined) {
+    assertArray(obj["libraries"], "libraries");
+    out["libraries"] = (obj["libraries"] as unknown[]).map((entry, i) => {
+      assertObject(entry, `libraries[${i}]`);
+      const e = entry as Obj;
+      assertString(e["name"], `libraries[${i}].name`);
+      assertString(e["version"], `libraries[${i}].version`);
+      assertString(e["cdnUrl"], `libraries[${i}].cdnUrl`);
+      assertString(e["globalName"], `libraries[${i}].globalName`);
+      assertArray(e["renderers"], `libraries[${i}].renderers`);
+      assertString(e["license"], `libraries[${i}].license`);
+      assertString(e["copyright"], `libraries[${i}].copyright`);
+      assertString(e["url"], `libraries[${i}].url`);
+      const lib: Record<string, unknown> = {
+        name: e["name"],
+        version: e["version"],
+        cdnUrl: e["cdnUrl"],
+        globalName: e["globalName"],
+        renderers: e["renderers"],
+        license: e["license"],
+        copyright: e["copyright"],
+        url: e["url"],
+      };
+      if (e["rendererVersionRequirement"] !== undefined) {
+        assertString(e["rendererVersionRequirement"], `libraries[${i}].rendererVersionRequirement`);
+        lib["rendererVersionRequirement"] = e["rendererVersionRequirement"];
+      }
+      return lib as unknown as LibraryDependency;
+    });
+  }
   if (obj["philosophy"] !== undefined) {
     assertString(obj["philosophy"], "philosophy");
     out["philosophy"] = obj["philosophy"];
@@ -708,7 +739,7 @@ function parseOptionals(obj: Obj): Partial<
   return out as Partial<
     Pick<
       SketchDefinition,
-      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "philosophy" | "tabs" | "themes" | "snapshots"
+      "subtitle" | "agent" | "model" | "skills" | "compositionLevel" | "lineage" | "dataChannels" | "data" | "components" | "symbols" | "thirdParty" | "layers" | "libraries" | "philosophy" | "tabs" | "themes" | "snapshots"
     >
   >;
 }
@@ -807,7 +838,7 @@ export function parseGenart(json: unknown): SketchDefinition {
     "genart", "id", "title", "subtitle", "created", "modified",
     "agent", "model", "skills", "compositionLevel", "lineage",
     "dataChannels", "data", "components", "symbols", "thirdParty",
-    "layers", "philosophy", "renderer", "canvas", "tabs",
+    "layers", "libraries", "philosophy", "renderer", "canvas", "tabs",
     "parameters", "colors", "themes", "state", "snapshots", "algorithm",
   ]);
   for (const key of Object.keys(json)) {
@@ -877,6 +908,10 @@ export function serializeGenart(sketch: SketchDefinition): string {
 
   if (sketch.layers !== undefined && sketch.layers.length > 0) {
     out["layers"] = sketch.layers;
+  }
+
+  if (sketch.libraries !== undefined && sketch.libraries.length > 0) {
+    out["libraries"] = sketch.libraries;
   }
 
   out["renderer"] = sketch.renderer;
